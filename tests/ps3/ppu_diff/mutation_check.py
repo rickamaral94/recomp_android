@@ -9,7 +9,11 @@ Mutants, each applied at the first site per source file and at every site:
   - carry flag computed with <= instead of <
   - XER[SO] no longer copied into CR0 by record forms
   - the harness stores little-endian instead of big-endian
-Exit status 0 only when every mutant is detected.
+  - fmadd and friends computed unfused (a*c+b rounded twice)
+  - VSCR[NJ] ignored by the VMX float helpers (runtime/ppu/ppu_vmx.h)
+A mutant counts as detected when the set of failing cases differs from the unmutated build's
+(host.bin), which may itself contain known divergences. Exit status 0 only when every mutant
+is detected.
 """
 import glob
 import json
@@ -18,6 +22,7 @@ import re
 import shutil
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
@@ -29,6 +34,9 @@ MUTANTS = [
     ("CR0 loses XER[SO]", "lifted", r"_c \|= \(uint32_t\)\(\(ctx->xer >> 31\) & 1u\);", "_c |= 0u;"),
     ("little-endian guest stores", "harness", re.escape("p[sizeof(T) - 1 - i] = static_cast<uint8_t>(v >> (8 * i));"),
      "p[i] = static_cast<uint8_t>(v >> (8 * i));"),
+    ("fused multiply-add computed unfused", "lifted", re.escape("double r = fma(a, c, neg_b ? -b : b);"),
+     "double r = a * c + (neg_b ? -b : b);"),
+    ("VSCR[NJ] ignored", "ppu_vmx.h", re.escape("return ((vscr & VMX_NJ) && "), "return (0 && "),
 ]
 
 
@@ -42,6 +50,8 @@ def main():
     with open(os.path.join(b, "oracle.bin"), "rb") as f:
         oracle = f.read()
     n = meta["count"] * meta["record_size"]
+    with open(os.path.join(b, "host.bin"), "rb") as f:
+        baseline = {x["case"] for x in run_diff.compare(meta, oracle, f.read())["all_failures"]}
     sources = sorted(glob.glob(os.path.join(b, "lifted", "*.cpp")))
     cxx = shutil.which(os.environ.get("CXX", "clang++"))
     all_detected = True
@@ -61,6 +71,10 @@ def main():
                 dst = os.path.join(d, os.path.basename(src))
                 open(dst, "w").write(text)
                 files.append(dst)
+            vmx = open(os.path.join(ROOT, "third_party", "ps3recomp", "runtime", "ppu", "ppu_vmx.h")).read()
+            if where == "ppu_vmx.h":
+                vmx, applied = re.subn(pat, rep, vmx, count=count)
+            open(os.path.join(d, "ppu_vmx.h"), "w").write(vmx)  # -I d comes first, so this copy wins
             harness = open(os.path.join(HERE, "harness.cpp")).read()
             if where == "harness":
                 harness, applied = re.subn(pat, rep, harness, count=count)
@@ -70,17 +84,23 @@ def main():
                 all_detected = False
                 continue
             exe = os.path.join(d, "harness")
-            subprocess.run([cxx, "-std=c++17", "-O1", "-w", "-fno-strict-aliasing", "-I", d,
-                            "-I", os.path.join(ROOT, "third_party", "ps3recomp", "runtime", "ppu"),
-                            os.path.join(d, "harness.cpp"), *files, "-o", exe], check=True)
+            flags = ["-std=c++17", "-O1", "-w", "-fno-strict-aliasing", "-I", d,
+                     "-I", os.path.join(ROOT, "third_party", "ps3recomp", "runtime", "ppu")]
+            srcs = [os.path.join(d, "harness.cpp"), *files]
+            objs = [x + ".o" for x in srcs]
+            with ThreadPoolExecutor(max_workers=os.cpu_count() or 2) as pool:
+                list(pool.map(lambda so: subprocess.run([cxx, *flags, "-c", so[0], "-o", so[1]], check=True),
+                              zip(srcs, objs)))
+            subprocess.run([cxx, *objs, "-o", exe], check=True)
             out = subprocess.run([exe, str(n)], capture_output=True).stdout
             if len(out) != n + meta["scratch_size"]:
                 print(f"{name} [{mode}]: applied at {applied} site(s); mutant did not finish -> detected")
                 continue
             r = run_diff.compare(meta, oracle, out)
-            detected = r["failed"] > 0 or not r["scratch_memory_equal"]
+            failing = {x["case"] for x in r["all_failures"]}
+            detected = failing != baseline or not r["scratch_memory_equal"]
             all_detected &= detected
-            print(f"{name} [{mode}]: applied at {applied} site(s); {r['failed']} case(s) differ -> "
+            print(f"{name} [{mode}]: applied at {applied} site(s); {len(failing ^ baseline)} case(s) changed -> "
                   f"{'detected' if detected else 'MISSED'}")
     shutil.rmtree(os.path.join(b, "mutant"), ignore_errors=True)
     return 0 if all_detected else 1

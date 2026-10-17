@@ -14,7 +14,9 @@ Steps (all artefacts in --build):
   6. with --ndk: build a static arm64 Android executable, run it under qemu-aarch64 -> arm64.bin
   7. compare every record field (masked where the ISA leaves it undefined) -> report.json
 
-Exit status 0 only when every compared target matches the oracle exactly.
+Failures listed in known_divergences.json (understood, not yet fixed) are reported as known.
+Exit status 0 only when every failure on every target is explained by an entry AND each
+entry's failing-case count equals the count it pins for that target.
 """
 import argparse
 import collections
@@ -86,7 +88,7 @@ _start:
     .section .outbuf,"aw",@nobits
     .space {n}
     .section .scratch,"aw",@nobits
-    .space {scratch}
+    .space {scratch_alloc}
 """
 
 
@@ -95,12 +97,13 @@ def compare(cases_meta, oracle, other):
     n = cases_meta["count"]
     fails = []
     by_group = collections.defaultdict(lambda: [0, 0])
+    fpscr_info = collections.Counter()
     for i, c in enumerate(cases_meta["cases"]):
         a = oracle[i * rec:(i + 1) * rec]
         b = other[i * rec:(i + 1) * rec]
-        r7a, r8a, cra, xera = struct.unpack(">QQII", a)
-        r7b, r8b, crb, xerb = struct.unpack(">QQII", b)
-        m7, m8, mcr = (int(c["masks"][k], 16) for k in ("r7", "r8", "cr"))
+        r7a, r8a, cra, xera = struct.unpack(">QQII8x", a)
+        r7b, r8b, crb, xerb = struct.unpack(">QQII8x", b)
+        m7, m8, mcr, mx = (int(c["masks"][k], 16) for k in ("r7", "r8", "cr", "xer"))
         diffs = {}
         if (r7a ^ r7b) & m7:
             diffs["r7"] = [f"{r7a:#018x}", f"{r7b:#018x}"]
@@ -108,17 +111,50 @@ def compare(cases_meta, oracle, other):
             diffs["r8"] = [f"{r8a:#018x}", f"{r8b:#018x}"]
         if (cra ^ crb) & mcr:
             diffs["cr"] = [f"{cra:#010x}", f"{crb:#010x}"]
-        if xera != xerb:
+        if (xera ^ xerb) & mx:
             diffs["xer"] = [f"{xera:#010x}", f"{xerb:#010x}"]
+        if c["kind"] == "fp" and xera != xerb:
+            fpscr_info[c["group"]] += 1  # recorded, not compared (see gen_cases.py)
         g = by_group[c["group"]]
         g[0] += 1
         if diffs:
             g[1] += 1
-            fails.append({"case": i, "name": c["name"], "inputs": c["inputs"], "diff (oracle, lifted)": diffs})
+            fails.append({"case": i, "name": c["name"], "group": c["group"], "inputs": c["inputs"],
+                          "diff (oracle, lifted)": diffs})
     scratch_ok = oracle[n * rec:] == other[n * rec:]
     return {"cases": n, "failed": len(fails), "scratch_memory_equal": scratch_ok,
             "groups": {k: {"cases": v[0], "failed": v[1]} for k, v in sorted(by_group.items())},
-            "failures": fails[:200], "failures_truncated": len(fails) > 200}
+            "fpscr_differs_informational": dict(sorted(fpscr_info.items())),
+            "all_failures": fails}
+
+
+def classify(report_target, target, known):
+    """Split failures into known entries / unexplained; check pinned counts. Returns problems."""
+    import re
+    hits = collections.Counter()
+    unexplained = []
+    for f in report_target["all_failures"]:
+        for e in known["entries"]:
+            m = e["match"]
+            if "groups" in m and f["group"] not in m["groups"]:
+                continue
+            if "name_regex" in m and not re.search(m["name_regex"], f["name"]):
+                continue
+            hits[e["id"]] += 1
+            break
+        else:
+            unexplained.append(f)
+    problems = []
+    summary = {}
+    for e in known["entries"]:
+        want = e["expect"].get(target)
+        got = hits.get(e["id"], 0)
+        summary[e["id"]] = {"class": e["class"], "failing": got, "expected": want}
+        if want is not None and got != want:
+            problems.append(f"{e['id']}: {got} failing case(s), known_divergences.json expects {want}")
+    if unexplained:
+        problems.append(f"{len(unexplained)} failing case(s) not explained by known_divergences.json")
+    return summary, unexplained, problems
 
 
 def main():
@@ -128,6 +164,7 @@ def main():
     ap.add_argument("--ndk", help="Android NDK root: also build and run an arm64 static executable")
     ap.add_argument("--qemu-cpu", default="power7")
     ap.add_argument("--opt", default="-O1")
+    ap.add_argument("--suites", default="int,fp,vmx")
     a = ap.parse_args()
     b = os.path.abspath(a.build)
     os.makedirs(b, exist_ok=True)
@@ -135,12 +172,13 @@ def main():
     lld, objcopy, qppc = tool("ld.lld"), tool("llvm-objcopy"), tool("qemu-ppc64")
     timings = {}
 
-    timings["generate"] = run([sys.executable, "-I", os.path.join(HERE, "gen_cases.py"), b], stdout=subprocess.DEVNULL)
+    timings["generate"] = run([sys.executable, "-I", os.path.join(HERE, "gen_cases.py"), b, "--suites", a.suites],
+                              stdout=subprocess.DEVNULL)
     with open(os.path.join(b, "cases.json")) as f:
         meta = json.load(f)
     n_bytes = meta["count"] * meta["record_size"]
 
-    ppc = ["--target=powerpc64-unknown-linux-gnu", "-c"]
+    ppc = ["--target=powerpc64-unknown-linux-gnu", "-mcpu=pwr7", "-c"]
     timings["assemble"] = run([clang, *ppc, os.path.join(b, "kernel.S"), "-o", os.path.join(b, "kernel.o")])
     relocs = subprocess.run([tool("llvm-readelf"), "-r", os.path.join(b, "kernel.o")],
                             capture_output=True, text=True, check=True).stdout
@@ -151,7 +189,8 @@ def main():
 
     with open(os.path.join(b, "start.S"), "w") as f:
         f.write(START_S.format(out_hi=OUT_ADDR >> 16, scr_hi=SCRATCH_ADDR >> 16, n=n_bytes,
-                               n_hi=n_bytes >> 16, n_lo=n_bytes & 0xFFFF, scratch=meta["scratch_size"]))
+                               n_hi=n_bytes >> 16, n_lo=n_bytes & 0xFFFF, scratch=meta["scratch_size"],
+                               scratch_alloc=meta["scratch_alloc"]))
     run([clang, *ppc, os.path.join(b, "start.S"), "-o", os.path.join(b, "start.o")])
     run([lld, "-static", f"--section-start=.outbuf={OUT_ADDR:#x}", f"--section-start=.scratch={SCRATCH_ADDR:#x}",
          os.path.join(b, "start.o"), os.path.join(b, "kernel.o"), "-o", os.path.join(b, "oracle.elf")])
@@ -214,8 +253,10 @@ def main():
     report = {"schema": "recomp_android.ppu-diff-report", "schema_version": 1,
               "oracle": f"qemu-ppc64 -cpu {a.qemu_cpu} ({subprocess.run([qppc, '--version'], capture_output=True, text=True).stdout.splitlines()[0]})",
               "ps3recomp": subprocess.run(["git", "-C", a.ps3recomp, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "unknown",
-              "kernel_bytes": size, "opt": a.opt, "timings_s": {k: round(v, 2) for k, v in timings.items()},
+              "suites": a.suites, "kernel_bytes": size, "opt": a.opt, "timings_s": {k: round(v, 2) for k, v in timings.items()},
               "targets": {}}
+    with open(os.path.join(HERE, "known_divergences.json")) as f:
+        known = json.load(f)
     ok = True
     for name, fn in targets.items():
         with open(os.path.join(b, fn), "rb") as f:
@@ -225,17 +266,28 @@ def main():
             ok = False
             continue
         r = compare(meta, oracle, data)
+        summary, unexplained, problems = classify(r, name, known)
+        r.pop("all_failures")
+        r["known_divergences"] = summary
+        r["unexplained_failures"] = unexplained[:200]
+        r["problems"] = problems
         report["targets"][name] = r
-        ok &= r["failed"] == 0 and r["scratch_memory_equal"]
+        ok &= not problems and r["scratch_memory_equal"]
     with open(os.path.join(b, "report.json"), "w") as f:
         json.dump(report, f, indent=1)
     for name, r in report["targets"].items():
         if "error" in r:
             print(f"{name}: ERROR {r['error']}")
             continue
-        bad = [f"{g} {v['failed']}/{v['cases']}" for g, v in r["groups"].items() if v["failed"]]
+        known_n = sum(v["failing"] for v in r["known_divergences"].values())
+        if r["fpscr_differs_informational"]:
+            print(f"{name}: FPSCR differs (informational, not compared) in "
+                  f"{sum(r['fpscr_differs_informational'].values())} FP cases")
         print(f"{name}: {r['cases'] - r['failed']}/{r['cases']} cases match, scratch "
-              f"{'equal' if r['scratch_memory_equal'] else 'DIFFERENT'}" + (f"; failing groups: {', '.join(bad)}" if bad else ""))
+              f"{'equal' if r['scratch_memory_equal'] else 'DIFFERENT'}; {known_n} known divergence(s), "
+              f"{len(r['unexplained_failures'])} unexplained")
+        for p in r["problems"]:
+            print(f"{name}: PROBLEM: {p}")
     print("report:", os.path.join(b, "report.json"))
     return 0 if ok else 1
 

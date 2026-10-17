@@ -1,7 +1,16 @@
 # M1-PS3 — PPU sintético → lift → arm64, com oráculo
 
-Estado em 2026-10-17. Escopo: **instruções inteiras da PPU** (sem FP, VMX, syscalls, SPU, RSX).
-Nada disso envolve código de jogo: o binário de teste é gerado.
+Estado em 2026-10-17. Escopo: **instruções inteiras, de ponto flutuante (FP) e vetoriais
+(VMX/AltiVec) da PPU**. Ficam de fora syscalls, SPU e RSX. Nada disso envolve código de jogo:
+o binário de teste é gerado.
+
+Três suítes (`gen_cases.py --suites int,fp,vmx`), com 34.461 casos ao todo:
+
+| Suíte | Casos | Entradas | Registro |
+|---|---|---|---|
+| int | 23.350 | r4–r6, CR, XER | r7, r8, CR, XER |
+| fp | 5.654 | f1–f3, FPSCR[RN] | f7, f8, CR, FPSCR (só informativo) |
+| vmx | 5.457 | v4–v6, VSCR (NJ, SAT) | v7, CR, VSCR |
 
 ## O que o teste faz
 
@@ -27,7 +36,48 @@ Os campos que a ISA deixa **indefinidos** são mascarados caso a caso, e só ele
 de `mulhw`/`mulhwu`/`divw`/`divwu` em modo 64 bits, LT/GT/EQ do CR0 nesses casos e o resultado de
 divisão por zero ou com overflow. As flags OV/SO desses casos continuam sendo comparadas.
 
-## Resultado (execução local de 2026-10-17)
+## Resultado (execução local de 2026-10-17, três suítes)
+
+| Alvo | Casos | Iguais ao oráculo | Divergências conhecidas | Sem explicação | Memória |
+|---|---|---|---|---|---|
+| host x86_64 (clang 18, `-O1`) | 34.461 | 34.317 | 144 | **0** | igual |
+| android-arm64 (NDK 29, `-O1`, qemu-aarch64) | 34.461 | 34.329 | 132 | **0** | igual |
+
+A suíte de inteiros continua 100% igual nos dois alvos. Todas as diferenças estão em FP e VMX,
+e cada uma está explicada em `tests/ps3/ppu_diff/known_divergences.json`, com o número exato de
+casos por alvo. O CI reprova se aparecer uma falha fora da lista ou se algum desses números
+mudar.
+
+### Divergências encontradas no ps3recomp `39a36296`
+
+| Id | Classe | O que acontece | Casos (x86_64 / arm64) |
+|---|---|---|---|
+| `fp-rounding-mode-ignored` | lifter | `FPSCR[RN]` ≠ "mais próximo" é ignorado por `fadd`/`fmul`/`fdiv`/`fadds`/`fmuls`/`fmadd`/`frsp`/`fctiw`/`fctid`/`fcfid` | 56 / 56 |
+| `fsqrt-default-nan-sign-x86` | lifter | `fsqrt` de negativo devolve o NaN padrão do host: `0xfff8…` no x86. No arm64 é `0x7ff8…`, igual ao PowerPC | 12 / **0** |
+| `lfs-quiets-snan` | lifter | `lfs` de sNaN simples liga o bit "quiet" | 2 / 2 |
+| `stfs-rounds-instead-of-bit-conversion` | lifter | `stfs` usa um cast `(float)`, que arredonda, estoura para inf e silencia sNaN. A ISA manda recortar os bits | 6 / 6 |
+| `vmx-fma-snan-payload` | lifter | `vmaddfp`/`vnmsubfp` com sNaN perdem o payload (`0x7fc00000` em vez de `0x7fc00001`) | 48 / 48 |
+| `vctuxs-sat-on-negative-fraction` | lifter | `vctuxs` de um valor em (−1, 0) liga `VSCR[SAT]`; o vetor resultante está certo | 2 / 2 |
+| `vcmpfp-nj-denormal-uncertain` | **oráculo incerto** | com NJ=1, o qemu trata denormal como zero nas comparações de float; o lifter não. Não sei qual dos dois reproduz o Cell | 18 / 18 |
+
+Impacto esperado num jogo (inferência, a confirmar no ELF):
+- **Baixo:** jogos quase nunca mudam o modo de arredondamento, carregam sNaN ou leem o SAT.
+- **Primeiro a corrigir:** o `stfs` de double não arredondado. Um compilador normalmente faz
+  `frsp` antes, mas não há garantia. A análise do executável vai mostrar se existe `mtfsf`/`mtfsfi`
+  e `stfs` sem `frsp` antes.
+
+O FPSCR é gravado mas não comparado: o próprio ps3recomp diz que a aritmética FP ainda não
+atualiza os bits de status, e o qemu os atualiza (eles diferem em 5.101 casos de FP). As formas
+FP com ponto (CR1 vem do FPSCR) ficaram de fora pelo mesmo motivo. Também ficaram de fora as
+estimativas (`fres`, `frsqrte`, `vrefp`, `vrsqrtefp`, `vexptefp`, `vlogefp`), cujo resultado
+exato depende do processador, e as instruções exclusivas do Cell (`lvlx`/`lvrx`/`stvlx`/`stvrx`),
+que o POWER7 não tem.
+
+Na primeira rodada, 37 falhas de `vsl`/`vsr` eram **erro meu**: a ISA só define o resultado
+quando todos os bytes do vetor de deslocamento são iguais. O gerador agora usa contagens
+replicadas em todos os bytes.
+
+### Suíte de inteiros (primeira versão deste marco)
 
 | Alvo | Casos | Iguais ao oráculo | Memória de rascunho |
 |---|---|---|---|
@@ -71,7 +121,8 @@ Não prova:
 - **Cell real:** o oráculo é o qemu, não um Cell. As diferenças conhecidas entre eles estão nas
   partes mascaradas. Comparar com o interpretador do RPCS3/Armadasx3 é o próximo oráculo.
 - **Aparelho:** o binário arm64 rodou em qemu-aarch64, não no Odin 2 Portal.
-- **FP, VMX, reservas atômicas** (`lwarx`/`stwcx.`), `mftb`, syscalls e chamadas indiretas
+- **Flags do FPSCR, estimativas e instruções exclusivas do Cell:** fora (veja acima).
+- **Reservas atômicas** (`lwarx`/`stwcx.`), `mftb`, syscalls e chamadas indiretas
   (`bctr`/`bctrl`): fora deste teste. O harness aborta se alguma for chamada.
 - **Código de jogo:** fluxo de controle real, jump tables, entradas no meio de função, TOC e OPD
   ainda não foram exercitados.
@@ -93,9 +144,11 @@ oráculo e do código recompilado.
 
 ## Próximos passos
 
-1. FP (`fadd`, `fmadd`, `fctiw`, `frsp`, NaN/arredondamento) e VMX com `-cpu 970`, que tem AltiVec.
-   No VMX, cuidado com o modo non-Java (NJ) do Cell.
-2. `lwarx`/`stwcx.` e `ldarx`/`stdcx.`, `mftb`, `bctr`/`bctrl` com um despachante de teste.
-3. Um ELF no formato PS3 (OPD, TOC, imports) com `make_smoke_elf.py` do ps3recomp, passando pelo
+1. Oráculo RPCS3 (interpretador PPU do Armadasx3), para decidir o caso NJ e cobrir
+   `lvlx`/`lvrx`/`stvlx`/`stvrx` e as estimativas.
+2. Corrigir as divergências que o ELF do jogo mostrar que importam (patches no ps3recomp,
+   enviados também para o upstream).
+3. `lwarx`/`stwcx.` e `ldarx`/`stdcx.`, `mftb`, `bctr`/`bctrl` com um despachante de teste.
+4. Um ELF no formato PS3 (OPD, TOC, imports) com `make_smoke_elf.py` do ps3recomp, passando pelo
    loader do runtime.
-4. Rodar o harness arm64 no Odin 2 Portal (adb ou dentro do app) para sair do qemu.
+5. Rodar o harness arm64 no Odin 2 Portal (adb ou dentro do app) para sair do qemu.

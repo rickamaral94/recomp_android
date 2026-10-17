@@ -2,13 +2,24 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Generate the PPU differential-test kernel: PowerPC assembly + a case table.
 
-Each case loads known inputs (r4-r6, CR, XER), runs one instruction (or a short sequence),
-then stores a 24-byte record to the output buffer (r3, advanced per case):
+Each case loads known inputs, runs one instruction (or a short sequence), then stores a
+32-byte record to the output buffer (r3, 16-byte aligned, advanced per case). The layout
+depends on the case kind:
 
-  +0  r7  (primary result; preset to a sentinel)
-  +8  r8  (secondary result: update-form RA, second destination, ...; preset to a sentinel)
-  +16 CR  (mfcr)
-  +20 XER (mfxer, low 32 bits)
+  kind  +0..7          +8..15             +16  +20
+  int   r7             r8                 CR   XER (low 32 bits)
+  fp    f7 (bits)      f8 (bits)          CR   FPSCR (informational, see below)
+  vmx   v7 (bytes 0-7) v7 (bytes 8-15)    CR   VSCR
+
+int inputs: r4-r6, CR, XER. fp inputs: f1-f3, FPSCR (rounding mode). vmx inputs: v4-v6, VSCR
+(NJ). Results are preset to sentinels. Bytes 24-31 are left zero.
+
+FPSCR status bits are recorded but not compared: ps3recomp documents that its FP arithmetic
+does not update FPSCR status yet (tools/ppu_lifter.py). FP record forms (Rc=1), whose CR1
+comes from those bits, are left out for the same reason. Hardware estimates (fres,
+frsqrte, vrefp, vrsqrtefp, vexptefp, vlogefp) are left out: their exact bits are
+implementation-specific, so POWER7 says nothing about the Cell. Cell-only lvlx/lvrx/stvlx/
+stvrx do not exist on POWER7 and need another oracle.
 
 r9 holds the scratch-memory base for load/store cases; r31 is setup scratch. Cases are
 grouped into functions of CHUNK cases (ppu_diff_chunk_N), called with `bl` from
@@ -20,18 +31,22 @@ Fields the ISA leaves undefined are masked per case ("masks"), never compared:
 the high word of 32-bit multiply-high/divide results in 64-bit mode, CR0 LT/GT/EQ when the
 64-bit result is undefined, and divide results for division by zero or overflow.
 
-Usage: gen_cases.py OUT_DIR   -> OUT_DIR/kernel.S, OUT_DIR/cases.json
+Usage: gen_cases.py OUT_DIR [--suites int,fp,vmx]   -> OUT_DIR/kernel.S, OUT_DIR/cases.json
 """
+import argparse
 import json
 import os
 import random
+import struct
 import sys
 
 M64 = (1 << 64) - 1
 SENT7 = 0x5A5A5A5A5A5A5A5A
 SENT8 = 0xA5A5A5A5A5A5A5A5
-RECORD = 24
+RECORD = 32
 SCRATCH_SIZE = 256
+TEMP = 0x400        # r9 + TEMP: staging area for FP/VMX constants (not compared)
+SCRATCH_ALLOC = 0x800
 CHUNK = 250
 
 XER_SO, XER_OV, XER_CA = 1 << 31, 1 << 30, 1 << 29
@@ -81,10 +96,59 @@ class Gen:
         self.lines += body if isinstance(body, list) else [body]
         self.lines += ["std 7, 0(3)", "std 8, 8(3)", "mfcr 31", "stw 31, 16(3)",
                        "mfxer 31", "stw 31, 20(3)", f"addi 3, 3, {RECORD}"]
-        self.cases.append({"name": name, "group": group or name.split()[0].rstrip(".o"),
+        self.cases.append({"name": name, "kind": "int", "group": group or name.split()[0].rstrip(".o"),
                            "inputs": {"r4": f"{r4 & M64:#x}", "r5": f"{r5 & M64:#x}", "r6": f"{r6 & M64:#x}",
                                       "cr": f"{cr:#x}", "xer": f"{xer:#x}"},
-                           "masks": {"r7": f"{mask7:#x}", "r8": f"{mask8:#x}", "cr": f"{cr_mask:#x}"}})
+                           "masks": {"r7": f"{mask7:#x}", "r8": f"{mask8:#x}", "cr": f"{cr_mask:#x}",
+                                     "xer": "0xffffffff"}})
+
+    def stage64(self, off, v):
+        """Store a 64-bit constant at r9 + TEMP + off (big-endian), via r31."""
+        self.lines += load64("31", v) + [f"std 31, {TEMP + off}(9)"]
+
+    def fcase(self, name, body, f1=0, f2=0, f3=0, fpscr=0, cr=0, mask7=M64, mask8=M64,
+              cr_mask=0xFFFFFFFF, group=None):
+        idx = len(self.cases)
+        self.lines.append(f"# case {idx}: {name}")
+        for i, v in enumerate((f1, f2, f3, SENT7, SENT8, fpscr)):
+            self.stage64(8 * i, v)
+        self.lines += [f"lfd 1, {TEMP}(9)", f"lfd 2, {TEMP + 8}(9)", f"lfd 3, {TEMP + 16}(9)",
+                       f"lfd 7, {TEMP + 24}(9)", f"lfd 8, {TEMP + 32}(9)", f"lfd 0, {TEMP + 40}(9)",
+                       "mtfsf 0xff, 0"]
+        self.lines += load64("31", cr) + ["mtcrf 0xff, 31"]
+        self.lines += body if isinstance(body, list) else [body]
+        self.lines += ["stfd 7, 0(3)", "stfd 8, 8(3)", "mfcr 31", "stw 31, 16(3)",
+                       "mffs 0", f"stfd 0, {TEMP + 48}(9)", f"lwz 31, {TEMP + 52}(9)", "stw 31, 20(3)",
+                       f"addi 3, 3, {RECORD}"]
+        self.cases.append({"name": name, "kind": "fp", "group": group or name.split()[0],
+                           "inputs": {"f1": f"{f1:#x}", "f2": f"{f2:#x}", "f3": f"{f3:#x}", "fpscr": f"{fpscr:#x}"},
+                           "masks": {"r7": f"{mask7:#x}", "r8": f"{mask8:#x}", "cr": f"{cr_mask:#x}", "xer": "0x0"}})
+
+    def vcase(self, name, body, v4=0, v5=0, v6=0, vscr=0, cr=0, mask_hi=M64, mask_lo=M64,
+              cr_mask=0xFFFFFFFF, group=None, r4=None):
+        """v4-v6 are 128-bit ints (byte 0 = most significant). v7 is preset to a sentinel."""
+        idx = len(self.cases)
+        self.lines.append(f"# case {idx}: {name}")
+        M128 = (1 << 128) - 1
+        vals = (v4 & M128, v5 & M128, v6 & M128, (SENT7 << 64) | SENT8, vscr & 0xFFFFFFFF)
+        for i, v in enumerate(vals):
+            self.stage64(16 * i, v >> 64)
+            self.stage64(16 * i + 8, v & M64)
+        for i, vr in enumerate((4, 5, 6, 7, 0)):
+            self.lines += [f"li 31, {TEMP + 16 * i}", f"lvx {vr}, 9, 31"]
+        self.lines += ["mtvscr 0"]
+        self.lines += load64("31", cr) + ["mtcrf 0xff, 31"]
+        if r4 is not None:
+            self.lines += load64("4", r4)
+        self.lines += body if isinstance(body, list) else [body]
+        self.lines += ["stvx 7, 0, 3", "mfcr 31", "stw 31, 16(3)",
+                       "mfvscr 0", f"li 31, {TEMP + 96}", "stvx 0, 9, 31", f"lwz 31, {TEMP + 108}(9)",
+                       "stw 31, 20(3)", f"addi 3, 3, {RECORD}"]
+        self.cases.append({"name": name, "kind": "vmx", "group": group or name.split()[0],
+                           "inputs": {"v4": f"{vals[0]:#034x}", "v5": f"{vals[1]:#034x}", "v6": f"{vals[2]:#034x}",
+                                      "vscr": f"{vscr:#x}"},
+                           "masks": {"r7": f"{mask_hi:#x}", "r8": f"{mask_lo:#x}", "cr": f"{cr_mask:#x}",
+                                     "xer": "0xffffffff"}})
 
     def fresh(self):
         self.label += 1
@@ -95,8 +159,7 @@ def xer_variants(carry_ops):
     return [0, XER_CA, XER_SO, XER_SO | XER_CA] if carry_ops else [0, XER_SO]
 
 
-def build():
-    g = Gen()
+def build_int(g):
     LO32 = 0xFFFFFFFF
     CR0_SO_ONLY = 0x1FFFFFFF  # CR0 LT/GT/EQ undefined, SO still defined
 
@@ -278,6 +341,225 @@ def build():
     return g
 
 
+# ---------------------------------------------------------------------------------------------
+# Floating point
+# ---------------------------------------------------------------------------------------------
+
+def dbits(x):
+    return struct.unpack(">Q", struct.pack(">d", x))[0]
+
+
+QNAN, SNAN = 0x7FF8000000000000, 0x7FF0000000000001
+FP_ALL = [0, 0x8000000000000000, dbits(1.0), dbits(-1.0), dbits(1.5), dbits(3.0), dbits(0.1),
+          dbits(1 / 3), 0x7FEFFFFFFFFFFFFF, 0x0010000000000000, 1, 0x800FFFFFFFFFFFFF,
+          0x7FF0000000000000, 0xFFF0000000000000, QNAN, 0x7FF8000000000123, 0xFFF8000000000456,
+          SNAN, 0x7FF4000000000ABC, dbits(2.0 ** 31), dbits(-2.0 ** 31 - 1), dbits(4294967296.5),
+          dbits(1e39), dbits(1e-40), dbits(1 + 2 ** -30), dbits(-2.5), dbits(2.0 ** 63), dbits(-2.0 ** 63)]
+FP_PAIR = [0, 0x8000000000000000, dbits(1.0), dbits(-1.5), dbits(0.1), dbits(1 / 3), 0x7FEFFFFFFFFFFFFF,
+           1, 0x7FF0000000000000, 0xFFF0000000000000, 0x7FF8000000000123, SNAN, dbits(1e39),
+           dbits(1 + 2 ** -30)]
+FP_TRIPLE = [0, dbits(1.0), dbits(-0.1), dbits(1 / 3), 0x7FF0000000000000, 0x7FF8000000000123, 1]
+FP_SINGLE = [0, 0x80000000, 0x3F800000, 0x00000001, 0x807FFFFF, 0x7F7FFFFF, 0x7F800000,
+             0xFF800000, 0x7FC00000, 0x7F800001, 0x7FA00123]
+RN = {0: "nearest", 1: "toward zero", 2: "toward +inf", 3: "toward -inf"}
+
+
+def build_fp(g):
+    LO32 = 0xFFFFFFFF
+    for op in ("fadd", "fsub", "fmul", "fdiv", "fadds", "fsubs", "fmuls", "fdivs"):
+        for a in FP_PAIR:
+            for b in FP_PAIR:
+                g.fcase(f"{op} f7,f1,f2", f"{op} 7, 1, 2", f1=a, f2=b, group=op)
+    for op in ("fmadd", "fmsub", "fnmadd", "fnmsub", "fmadds", "fmsubs", "fnmadds", "fnmsubs", "fsel"):
+        for a in FP_TRIPLE:
+            for c in FP_TRIPLE:
+                for b in FP_TRIPLE:
+                    g.fcase(f"{op} f7,f1,f2,f3", f"{op} 7, 1, 2, 3", f1=a, f2=c, f3=b, group=op)
+    for op in ("fabs", "fnabs", "fneg", "fmr", "frsp", "fsqrt", "fsqrts", "fctiw", "fctiwz",
+               "fctid", "fctidz", "fcfid"):
+        for a in FP_ALL + ([0x7FFFFFFFFFFFFFFF, 0x8000000000000000, 1, 0xFFFFFFFFFFFFFFFF, 0x0020000000000001]
+                           if op == "fcfid" else []):
+            # fctiw/fctiwz: FRT[0:31] are undefined (Book I 4.6.7)
+            m = LO32 if op in ("fctiw", "fctiwz") else M64
+            g.fcase(f"{op} f7,f1", f"{op} 7, 1", f1=a, mask7=m, group=op)
+    for op in ("fcmpu", "fcmpo"):
+        for a in FP_PAIR:
+            for b in FP_PAIR:
+                g.fcase(f"{op} cr1,f1,f2", f"{op} 1, 1, 2", f1=a, f2=b, cr=0xFFFFFFFF, group=op)
+    # Rounding modes (FPSCR[RN]) on inexact operations.
+    inexact = [(dbits(0.1), dbits(0.2)), (dbits(1 / 3), dbits(3.0)), (dbits(1 + 2 ** -30), dbits(1.0)),
+               (dbits(-0.1), dbits(-0.7)), (dbits(2.5), dbits(1.0)), (dbits(-2.5), dbits(1.0))]
+    for rn in (1, 2, 3):
+        for a, b in inexact:
+            for op in ("fadd", "fmul", "fdiv", "fadds", "fmuls"):
+                g.fcase(f"{op} f7,f1,f2 RN={rn}", f"{op} 7, 1, 2", f1=a, f2=b, fpscr=rn, group=f"{op} (RN)")
+            g.fcase(f"fmadd f7,f1,f2,f3 RN={rn}", "fmadd 7, 1, 2, 3", f1=a, f2=b, f3=dbits(0.3), fpscr=rn,
+                    group="fmadd (RN)")
+            for op in ("frsp", "fctiw", "fctid"):
+                g.fcase(f"{op} f7,f1 RN={rn}", f"{op} 7, 1", f1=a, fpscr=rn,
+                        mask7=LO32 if op == "fctiw" else M64, group=f"{op} (RN)")
+        for v in (0x7FFFFFFFFFFFFFFF, 0x0020000000000001, 0xFFFFFFFFFFFFFFFF):
+            g.fcase(f"fcfid f7,f1 RN={rn}", "fcfid 7, 1", f1=v, fpscr=rn, group="fcfid (RN)")
+    # Memory format conversions.
+    T = TEMP + 64
+    for sv in FP_SINGLE:
+        g.fcase(f"lfs f7 <- {sv:#010x}", load64("31", sv << 32) + [f"std 31, {T}(9)", f"lfs 7, {T}(9)"],
+                group="lfs")
+    for dv in FP_ALL:
+        g.fcase("stfs f1", [f"stfs 1, {T}(9)", "li 31, 0", f"stw 31, {T + 4}(9)", f"lfd 8, {T}(9)"],
+                f1=dv, group="stfs")
+        g.fcase("fctiwz+stfiwx f1", ["fctiwz 7, 1", f"li 31, {T}", "stfiwx 7, 9, 31", "li 31, 0",
+                                     f"stw 31, {T + 4}(9)", f"lfd 8, {T}(9)"],
+                f1=dv, mask7=LO32, group="stfiwx")
+        g.fcase("stfd/lfd round trip f1", [f"stfd 1, {T}(9)", f"lfd 7, {T}(9)", f"li 31, {T}", "lfdx 8, 9, 31"],
+                f1=dv, group="stfd/lfd")
+
+
+# ---------------------------------------------------------------------------------------------
+# VMX / AltiVec
+# ---------------------------------------------------------------------------------------------
+
+VSCR_NJ, VSCR_SAT = 0x00010000, 0x00000001
+
+
+def vwords(*w):
+    v = 0
+    for x in w:
+        v = (v << 32) | (x & 0xFFFFFFFF)
+    return v
+
+
+def fw(x):
+    return struct.unpack(">I", struct.pack(">f", x))[0]
+
+
+VI = [0, (1 << 128) - 1, int.from_bytes(bytes(range(16)), "big"),
+      0x7F80FF00017E80817FFF8000FFFF0001, vwords(0x7FFFFFFF, 0x80000000, 1, 0xFFFFFFFF),
+      0x7FFF80000001FFFF00007FFE8001FFFE, rng.getrandbits(128), rng.getrandbits(128)]
+VI6 = VI[:6]
+VF = [vwords(fw(0.0), fw(-0.0), fw(1.0), fw(-1.0)),
+      vwords(0x7F800000, 0xFF800000, 0x7FC00000, 0x7F800001),
+      vwords(0x00000001, 0x80400000, 0x00800000, 0x7F7FFFFF),
+      vwords(fw(1.5), 0x4F000000, fw(-2.5), fw(1e10)),
+      vwords(fw(0.1), fw(1 / 3), fw(3.0), fw(-0.75)),
+      vwords(0x7FC00123, 0xFFC00000, 0x3F7FFFFF, 0x33800000)]
+PERM = [int.from_bytes(bytes(range(16)), "big"), int.from_bytes(bytes(range(31, 15, -1)), "big"),
+        int.from_bytes(bytes([(i * 7) & 0x1F for i in range(16)]), "big"),
+        int.from_bytes(bytes([0xE0 | (i * 3 & 0x1F) for i in range(16)]), "big")]
+
+V_BIN = ("vaddubm vadduhm vadduwm vaddubs vadduhs vadduws vaddsbs vaddshs vaddsws vaddcuw "
+         "vsububm vsubuhm vsubuwm vsububs vsubuhs vsubuws vsubsbs vsubshs vsubsws vsubcuw "
+         "vmuleub vmuleuh vmulesb vmulesh vmuloub vmulouh vmulosb vmulosh "
+         "vavgub vavguh vavguw vavgsb vavgsh vavgsw vmaxub vmaxuh vmaxuw vmaxsb vmaxsh vmaxsw "
+         "vminub vminuh vminuw vminsb vminsh vminsw vand vandc vor vnor vxor "
+         "vslb vslh vslw vsrb vsrh vsrw vsrab vsrah vsraw vrlb vrlh vrlw vslo vsro "
+         "vmrghb vmrghh vmrghw vmrglb vmrglh vmrglw "
+         "vpkuhum vpkuwum vpkuhus vpkuwus vpkshus vpkswus vpkshss vpkswss vpkpx "
+         "vsum4ubs vsum4sbs vsum4shs vsum2sws vsumsws").split()
+V_CMP = "vcmpequb vcmpequh vcmpequw vcmpgtub vcmpgtuh vcmpgtuw vcmpgtsb vcmpgtsh vcmpgtsw".split()
+V_FCMP = "vcmpeqfp vcmpgefp vcmpgtfp vcmpbfp".split()
+V_TERN = "vsel vmsumubm vmsummbm vmsumuhm vmsumuhs vmsumshm vmsumshs vmhaddshs vmhraddshs vmladduhm".split()
+V_FBIN = "vaddfp vsubfp vmaxfp vminfp".split()
+
+
+def build_vmx(g):
+    for op in V_BIN:
+        for a in VI6:
+            for b in VI6:
+                g.vcase(f"{op} v7,v4,v5", f"{op} 7, 4, 5", v4=a, v5=b, group=op)
+        # SAT is sticky: run once with it already set.
+        g.vcase(f"{op} v7,v4,v5 [SAT in]", f"{op} 7, 4, 5", v4=VI[3], v5=VI[4], vscr=VSCR_SAT, group=op)
+    # vsl/vsr: the ISA leaves the result undefined unless the low 3 bits of every byte of vB
+    # are equal, so vB is a splatted shift count here.
+    for op in ("vsl", "vsr"):
+        for a in VI6:
+            for sh in (0, 1, 3, 7):
+                g.vcase(f"{op} v7,v4,v5 (sh={sh})", f"{op} 7, 4, 5", v4=a, v5=int.from_bytes(bytes([sh | 0x18] * 16), "big"),
+                        group=op)
+    for op in V_CMP:
+        for sfx in ("", "."):
+            for a in VI6:
+                for b in VI6:
+                    g.vcase(f"{op}{sfx} v7,v4,v5", f"{op}{sfx} 7, 4, 5", v4=a, v5=b, cr=0x12345678, group=op)
+            g.vcase(f"{op}{sfx} v7,v4,v4", f"{op}{sfx} 7, 4, 4", v4=VI[6], cr=0x12345678, group=op)
+    for op in V_TERN:
+        for a in VI[:4]:
+            for b in VI[2:6]:
+                for c in (VI[0], VI[4], VI[6]):
+                    g.vcase(f"{op} v7,v4,v5,v6", f"{op} 7, 4, 5, 6", v4=a, v5=b, v6=c, group=op)
+    for c in PERM:
+        for a, b in ((VI[2], VI[3]), (VI[6], VI[7])):
+            g.vcase("vperm v7,v4,v5,v6", "vperm 7, 4, 5, 6", v4=a, v5=b, v6=c, group="vperm")
+    for nj in (0, VSCR_NJ):
+        tag = " [NJ]" if nj else ""
+        for op in V_FBIN:
+            for a in VF:
+                for b in VF:
+                    g.vcase(f"{op} v7,v4,v5{tag}", f"{op} 7, 4, 5", v4=a, v5=b, vscr=nj, group=op)
+        for op in ("vmaddfp", "vnmsubfp"):
+            for a in VF:
+                for b in VF[::2]:
+                    for c in VF[::3]:
+                        g.vcase(f"{op} v7,v4,v5,v6{tag}", f"{op} 7, 4, 5, 6", v4=a, v5=b, v6=c, vscr=nj, group=op)
+        for op in V_FCMP:
+            for sfx in ("", "."):
+                for a in VF:
+                    for b in VF[:4]:
+                        g.vcase(f"{op}{sfx} v7,v4,v5{tag}", f"{op}{sfx} 7, 4, 5", v4=a, v5=b, vscr=nj,
+                                cr=0x12345678, group=op)
+        for op in ("vrfin", "vrfiz", "vrfip", "vrfim"):
+            for a in VF:
+                g.vcase(f"{op} v7,v4{tag}", f"{op} 7, 4", v4=a, vscr=nj, group=op)
+        for op in ("vctuxs", "vctsxs"):
+            for u in (0, 1, 31):
+                for a in VF:
+                    g.vcase(f"{op} v7,v4,{u}{tag}", f"{op} 7, 4, {u}", v4=a, vscr=nj, group=op)
+    for op in ("vcfux", "vcfsx"):
+        for u in (0, 1, 31):
+            for a in VI6:
+                g.vcase(f"{op} v7,v4,{u}", f"{op} 7, 4, {u}", v4=a, group=op)
+    for op in ("vupkhsb", "vupkhsh", "vupklsb", "vupklsh", "vupkhpx", "vupklpx"):
+        for a in VI:
+            g.vcase(f"{op} v7,v4", f"{op} 7, 4", v4=a, group=op)
+    for op, us in (("vspltb", (0, 7, 15)), ("vsplth", (0, 3, 7)), ("vspltw", (0, 1, 2, 3))):
+        for u in us:
+            for a in (VI[2], VI[6]):
+                g.vcase(f"{op} v7,v4,{u}", f"{op} 7, 4, {u}", v4=a, group=op)
+    for op in ("vspltisb", "vspltish", "vspltisw"):
+        for simm in (-16, -1, 0, 1, 15):
+            g.vcase(f"{op} v7,{simm}", f"{op} 7, {simm}", group=op)
+    for sh in (0, 1, 7, 8, 15):
+        g.vcase(f"vsldoi v7,v4,v5,{sh}", f"vsldoi 7, 4, 5, {sh}", v4=VI[2], v5=VI[6], group="vsldoi")
+    # Loads and stores. r4 = scratch + off; scratch holds bytes 0x10.. (stores land at +128..).
+    base = 0x20000000
+    for off in (0, 3, 8, 13):
+        g.vcase(f"lvx v7,0,r4 (+{off})", "lvx 7, 0, 4", r4=base + off, group="lvx")
+        g.vcase(f"lvsl v7,0,r4 (+{off})", "lvsl 7, 0, 4", r4=base + off, group="lvsl")
+        g.vcase(f"lvsr v7,0,r4 (+{off})", "lvsr 7, 0, 4", r4=base + off, group="lvsr")
+    for op, size in (("lvebx", 1), ("lvehx", 2), ("lvewx", 4)):
+        for off in range(0, 16, size + (size == 1) * 2):
+            ea = off & ~(size - 1)
+            elem = ((1 << (8 * size)) - 1) << (8 * (16 - ea - size))   # only the loaded element is defined
+            g.vcase(f"{op} v7,0,r4 (+{off})", f"{op} 7, 0, 4", r4=base + 32 + off,
+                    mask_hi=elem >> 64, mask_lo=elem & M64, group=op)
+    for op, size in (("stvebx", 1), ("stvehx", 2), ("stvewx", 4), ("stvx", 16)):
+        for off in (0, 4, 9, 14):
+            g.vcase(f"{op} v4,0,r4 (+{off})", [f"{op} 4, 0, 4", "lvx 7, 0, 4"], v4=VI[6], r4=base + 128 + 16 * (size // 4) + off,
+                    group=op)
+    for v in (VSCR_NJ, VSCR_SAT, VSCR_NJ | VSCR_SAT, 0):
+        g.vcase(f"mtvscr/mfvscr {v:#x}", "vor 7, 0, 0", vscr=v, group="mtvscr/mfvscr")
+
+
+SUITES = {"int": build_int, "fp": build_fp, "vmx": build_vmx}
+
+
+def build(suites=("int", "fp", "vmx")):
+    g = Gen()
+    for s in suites:
+        SUITES[s](g)
+    return g
+
+
 def emit(g, out_dir):
     head = [
         "# Generated by tests/ps3/ppu_diff/gen_cases.py -- do not edit.",
@@ -320,7 +602,7 @@ def emit(g, out_dir):
     with open(os.path.join(out_dir, "kernel.S"), "w") as f:
         f.write("\n".join(head + body + [""]))
     meta = {"schema": "recomp_android.ppu-diff-cases", "schema_version": 1, "record_size": RECORD,
-            "scratch_size": SCRATCH_SIZE, "sentinels": {"r7": f"{SENT7:#x}", "r8": f"{SENT8:#x}"},
+            "scratch_size": SCRATCH_SIZE, "scratch_alloc": SCRATCH_ALLOC, "sentinels": {"r7": f"{SENT7:#x}", "r8": f"{SENT8:#x}"},
             "count": len(g.cases), "chunk": CHUNK, "cases": g.cases}
     with open(os.path.join(out_dir, "cases.json"), "w") as f:
         json.dump(meta, f, indent=0)
@@ -328,8 +610,9 @@ def emit(g, out_dir):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(__doc__)
-        sys.exit(2)
-    os.makedirs(sys.argv[1], exist_ok=True)
-    print(emit(build(), sys.argv[1]), "cases")
+    ap = argparse.ArgumentParser(description="Generate the PPU differential-test kernel")
+    ap.add_argument("out_dir")
+    ap.add_argument("--suites", default="int,fp,vmx", help="comma list of: " + ",".join(SUITES))
+    a = ap.parse_args()
+    os.makedirs(a.out_dir, exist_ok=True)
+    print(emit(build(a.suites.split(",")), a.out_dir), "cases")

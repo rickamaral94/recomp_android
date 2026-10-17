@@ -1,0 +1,20 @@
+# Build outputs
+/build/
+/app/build/
+/app/.cxx/
+/.gradle/
+/local.properties
+/out/
+*.apk
+*.aab
+
+# Never commit game material: dumps, ELFs, lifted output from commercial titles, BIOS, firmware, keys.
+/games/**/private/
+/work/
+*.iso
+*.bin
+*.elf
+*.self
+*.sprx
+*.rap
+*.pkg

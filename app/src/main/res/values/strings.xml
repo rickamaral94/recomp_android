@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">recomp_android</string>
+    <string name="collecting">Coletando informações do aparelho e do Vulkan…</string>
+    <string name="export_diagnostics">Exportar diagnóstico (ZIP)</string>
+    <string name="export_done">Diagnóstico exportado.</string>
+    <string name="export_failed">Falha ao exportar o diagnóstico. Veja o log.</string>
+</resources>

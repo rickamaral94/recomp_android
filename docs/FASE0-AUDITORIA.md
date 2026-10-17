@@ -221,6 +221,17 @@ e quente identificados.
 
 ## 7. Decisões que dependem do usuário
 
+**Respondidas em 2026-10-17:**
+
+1. Licença: **GPL-3.0-or-later** (arquivo `LICENSE`).
+2. Console: "p23", lido como **PS2 e PS3 em trilhas separadas**. O M0 é comum aos dois. A ordem do
+   M1 fica a confirmar.
+3. REA com jogos comerciais: o usuário **aceita explicitamente** que dados derivados (pseudocódigo,
+   assembly, nomes, endereços) vão para o provedor do agente. Os **binários e assets do jogo
+   continuam fora**: nada de upload do dump, e nada de código lifted no repositório.
+
+Texto original das perguntas:
+
 1. **Licença** do recomp_android (proposta: GPL-3.0-or-later; ver §4).
 2. **Console do primeiro marco:** PS3 (mais perto do Armadasx3 e com prova pública no Android via
    gow2-recomp) ou PS2 (PS2Recomp já tem runner Android). Proposta: PS3 primeiro, PS2 em seguida,

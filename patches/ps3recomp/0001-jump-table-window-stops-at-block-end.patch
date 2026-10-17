@@ -1,0 +1,32 @@
+Subject: ppu_lifter: jump-table detection window stops at the previous block end
+
+discover_jump_tables() looks at the 30 instructions before each bctr to decide
+whether the table holds offsets (an `add rC,rC,base` feeds mtctr) and how many
+entries it has (a `cmplwi idx,N`). That window is fixed and crosses function and
+block boundaries. With two neighbouring switch functions -- an offset table, then
+an absolute table -- the absolute one picked up the previous function's `add`,
+was decoded as offsets (every target outside .text), and its bctr lifted to an
+unresolved indirect call.
+
+Found by recomp_android's PPU differential test (tests/ps3/ppu_diff, flow suite).
+Base: sp00nznet/ps3recomp 39a36296511c445707adabcd312f0b740cfbd694.
+
+--- a/tools/ppu_lifter.py	2026-10-17 21:37:40.209619420 +0000
++++ b/tools/ppu_lifter.py	2026-10-17 21:37:40.223695961 +0000
+@@ -4317,6 +4317,16 @@
+             continue
+         _dbg(all_insns[i].addr, "bctr found")
+         win = all_insns[max(0, i - 30):i]
++        # The fixed 30-instruction window can reach back across the previous function (or an
++        # earlier block that ends in blr/bctr/b): an `add rC,rC,base` or a `cmplwi` found there
++        # belongs to someone else's switch. Two neighbouring switches -- one offset table, one
++        # absolute -- made the absolute one decode as offsets (every target out of range) and
++        # its bctr lift to an unresolved indirect call. Keep only the run that can fall into
++        # this bctr.
++        for _k in range(len(win) - 1, -1, -1):
++            if win[_k].mnemonic in ('blr', 'bctr', 'b', 'ba'):
++                win = win[_k + 1:]
++                break
+         win_cand = _live(_scan_lo(i), i)
+         # the ctr source register (last mtctr before the bctr)
+         rC = None

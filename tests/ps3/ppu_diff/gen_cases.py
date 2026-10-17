@@ -37,6 +37,7 @@ import argparse
 import json
 import os
 import random
+import re
 import struct
 import sys
 
@@ -76,6 +77,9 @@ class Gen:
         self.lines = []
         self.cases = []
         self.label = 0
+        self.funcs = {}   # name -> lines: helper functions placed after the chunks (flow suite)
+        self.data = []    # data words placed after every function, outside all function bounds
+        self.toc = []     # TOC slots (r2 points at the first)
 
     def case(self, name, body, r4=0, r5=0, r6=0, cr=0, xer=0, r8=SENT8,
              mask7=M64, mask8=M64, cr_mask=0xFFFFFFFF, group=None):
@@ -93,7 +97,13 @@ class Gen:
             self.lines += load64(reg, v)
         self.lines += load64("31", cr) + ["mtcrf 0xff, 31"]
         self.lines += load64("31", xer) + ["mtxer 31"]
-        self.lines += body if isinstance(body, list) else [body]
+        body = body if isinstance(body, list) else [body]
+        # A body can be emitted twice (the [SO] twin): give its local labels a per-case suffix.
+        labels = set(re.findall(r"(\.Lc\d+)(?![\w])", " ".join(body)))
+        if labels:
+            pat = re.compile("|".join(re.escape(x) + r"(?![\w])" for x in sorted(labels, key=len, reverse=True)))
+            body = [pat.sub(lambda m: f"{m.group(0)}_{idx}", line) for line in body]
+        self.lines += body
         self.lines += ["std 7, 0(3)", "std 8, 8(3)", "mfcr 31", "stw 31, 16(3)",
                        "mfxer 31", "stw 31, 20(3)", f"addi 3, 3, {RECORD}"]
         self.cases.append({"name": name, "kind": "int", "group": group or name.split()[0].rstrip(".o"),
@@ -551,10 +561,137 @@ def build_vmx(g):
         g.vcase(f"mtvscr/mfvscr {v:#x}", "vor 7, 0, 0", vscr=v, group="mtvscr/mfvscr")
 
 
-SUITES = {"int": build_int, "fp": build_fp, "vmx": build_vmx}
+# ---------------------------------------------------------------------------------------------
+# Control flow and atomics: indirect calls, jump tables, calls through descriptors, reservations
+# ---------------------------------------------------------------------------------------------
+
+KBASE = 0x10000  # the kernel is loaded here in every world (qemu, RPCS3, lifted)
 
 
-def build(suites=("int", "fp", "vmx")):
+def addr_of(reg, label, g):
+    """reg = absolute address of label, position-independently (the get-PC idiom).
+    Clobbers LR, which every chunk saves on entry."""
+    pc = g.fresh()
+    return ["bcl 20, 31, " + pc, f"{pc}:", f"mflr {reg}",
+            f"addis {reg}, {reg}, ({label} - {pc})@ha", f"addi {reg}, {reg}, ({label} - {pc})@l"]
+
+
+def toc_entry(g, label):
+    """A TOC slot holding the absolute address of label; returns its offset from the TOC base."""
+    off = 4 * len(g.toc)
+    g.toc.append(f"    .long {label} - ppu_diff_kernel + {KBASE:#x}")
+    return off
+
+
+def build_flow(g):
+    # Leaf functions reached indirectly.
+    g.funcs["ppu_diff_fn_add"] = ["add 7, 4, 5", "blr"]
+    g.funcs["ppu_diff_fn_sub"] = ["subf 7, 5, 4", "blr"]
+    g.funcs["ppu_diff_fn_xor"] = ["xor 7, 4, 5", "blr"]
+    # Reads a constant through its own TOC (r2), as PS3 code does after a descriptor call.
+    g.funcs["ppu_diff_fn_toc"] = ["lwz 7, 0(2)", "add 7, 7, 4", "blr"]
+    # Non-leaf: calls fn_add directly, so it needs a stack frame for LR.
+    g.funcs["ppu_diff_fn_nest"] = ["mflr 0", "stdu 1, -64(1)", "std 0, 80(1)", "bl ppu_diff_fn_add",
+                                   "addi 7, 7, 100", "ld 0, 80(1)", "addi 1, 1, 64", "mtlr 0", "blr"]
+    # Indirect tail call: takes its own address with get-PC (saving LR in r0 first), then bctr.
+    g.funcs["ppu_diff_fn_tail"] = (["mflr 0", "addi 4, 4, 1"] + addr_of("31", "ppu_diff_fn_add", g)
+                                   + ["mtlr 0", "mtctr 31", "bctr"])
+    # gcc-style switch: base-relative offset table found through the TOC.
+    jt0 = toc_entry(g, "ppu_diffd_jt0")
+    cases0 = [g.fresh() for _ in range(5)]
+    done0, dflt0 = g.fresh(), g.fresh()
+    g.funcs["ppu_diff_sw_rel"] = (
+        # lwax, not lwzx: the table sits after the code, so the offsets are negative, and in
+        # 64-bit mode a zero-extended offset would send bctr above 4 GB.
+        ["cmplwi 4, 4", f"bgt {dflt0}", f"lwz 11, {jt0}(2)", "slwi 0, 4, 2", "lwax 0, 11, 0", "add 0, 0, 11",
+         "mtctr 0", "bctr"]
+        + sum(([f"{c}:", f"li 7, {100 + 11 * i}", f"b {done0}"] for i, c in enumerate(cases0)), [])
+        + [f"{dflt0}:", "li 7, -1", f"{done0}:", "blr"])
+    g.data += ["    .p2align 2", "ppu_diffd_jt0:"] + [f"    .long {c} - ppu_diffd_jt0" for c in cases0]
+    # Absolute table (entry = case address).
+    jt1 = toc_entry(g, "ppu_diffd_jt1")
+    cases1 = [g.fresh() for _ in range(4)]
+    done1, dflt1 = g.fresh(), g.fresh()
+    g.funcs["ppu_diff_sw_abs"] = (
+        ["cmplwi 4, 3", f"bgt {dflt1}", f"lwz 11, {jt1}(2)", "slwi 0, 4, 2", "lwzx 0, 11, 0", "mtctr 0", "bctr"]
+        + sum(([f"{c}:", f"addi 7, 5, {7 * (i + 1)}", f"b {done1}"] for i, c in enumerate(cases1)), [])
+        + [f"{dflt1}:", "li 7, -2", f"{done1}:", "blr"])
+    g.data += ["    .p2align 2", "ppu_diffd_jt1:"] + [f"    .long {c} - ppu_diff_kernel + {KBASE:#x}" for c in cases1]
+    # Function-pointer table (vtable-like) and a PS3 function descriptor (OPD: code, TOC).
+    vt = toc_entry(g, "ppu_diffd_vtable")
+    g.data += ["    .p2align 2", "ppu_diffd_vtable:"] + [
+        f"    .long {f} - ppu_diff_kernel + {KBASE:#x}" for f in ("ppu_diff_fn_add", "ppu_diff_fn_sub", "ppu_diff_fn_xor")]
+    opd = toc_entry(g, "ppu_diffd_opd_toc")
+    g.data += ["    .p2align 3", "ppu_diffd_opd_toc:", f"    .long ppu_diff_fn_toc - ppu_diff_kernel + {KBASE:#x}",
+               f"    .long ppu_diffd_toc2 - ppu_diff_kernel + {KBASE:#x}",
+               "ppu_diffd_toc2:", "    .long 0x12340000"]
+
+    pairs = [(5, 7), (0xFFFFFFFF, 1), (0x7FFFFFFFFFFFFFFF, 1), (0x123456789ABCDEF0, 0x0F0F0F0F0F0F0F0F)]
+    for a, b in pairs:
+        for fn in ("ppu_diff_fn_add", "ppu_diff_fn_sub", "ppu_diff_fn_xor"):
+            short = fn.split("_")[-1]
+            g.case(f"bctrl {short}", addr_of("31", fn, g) + ["mtctr 31", "bctrl", "mfctr 8", "subf 8, 31, 8"],
+                   r4=a, r5=b, group="bctrl")
+            g.case(f"blrl {short}", addr_of("31", fn, g) + ["mtlr 31", "blrl"], r4=a, r5=b, group="blrl")
+        for idx in range(3):
+            g.case(f"vtable[{idx}] bctrl", [f"lwz 11, {vt}(2)", f"li 6, {idx}", "slwi 0, 6, 2", "lwzx 0, 11, 0",
+                                            "mtctr 0", "bctrl"], r4=a, r5=b, group="vtable call")
+        g.case("descriptor (OPD) call", [f"lwz 11, {opd}(2)", "lwz 0, 0(11)", "mtctr 0", "mr 30, 2", "lwz 2, 4(11)",
+                                         "bctrl", "mr 8, 2", "mr 2, 30", "subf 8, 2, 8"], r4=a, r5=b, group="opd call")
+        g.case("indirect tail call", ["bl ppu_diff_fn_tail"], r4=a, r5=b, group="tail call")
+        g.case("nested call", ["bl ppu_diff_fn_nest", "mr 8, 1", "subf 8, 9, 8"], r4=a, r5=b, group="nested call")
+        for take in (0, 1):
+            g.case(f"bnectrl taken={take}", addr_of("31", "ppu_diff_fn_add", g) + ["mtctr 31", f"cmpwi 1, {take}, 0"
+                   if False else f"li 30, {take}", "cmpwi 1, 30, 0", "bnectrl 1"], r4=a, r5=b, group="bcctrl")
+    for idx in list(range(7)) + [0xFFFFFFFF]:
+        g.case(f"switch rel idx={idx}", ["bl ppu_diff_sw_rel"], r4=idx, group="jump table (rel)")
+    for idx in list(range(5)) + [0x80000000]:
+        g.case(f"switch abs idx={idx}", ["bl ppu_diff_sw_abs"], r4=idx, r5=1000, group="jump table (abs)")
+
+    # Reservations. Words at scratch+220.., doublewords at +208 and +240.. (aligned). stwcx./stdcx. are record
+    # forms, so each case also gets its automatic [SO] twin (CR0[SO] must copy XER[SO]).
+    # Store-conditionals that must fail although a compare-and-swap on the value would succeed, so a
+    # real reservation is told apart from a value match:
+    #  - first, no lwarx has run yet and memory is zero, the value an empty reservation holds in the
+    #    ps3recomp context. Being the first stwcx./stdcx. sites in the lifted file, these also catch
+    #    the single-site mutant in mutation_check.py;
+    #  - then ABA: the reservation is used up by a successful store and a plain store puts back the
+    #    value lwarx read.
+    g.case("stwcx. with no reservation, memory 0", ["addi 4, 9, 220", "li 7, 0", "stw 7, 0(4)", "stwcx. 5, 0, 4",
+                                                    "lwz 8, 0(4)"], r5=0x44444444, group="lwarx/stwcx.")
+    g.case("stdcx. with no reservation, memory 0", ["addi 4, 9, 208", "li 7, 0", "std 7, 0(4)", "stdcx. 5, 0, 4",
+                                                    "ld 8, 0(4)"], r5=0x4444444444444444, group="ldarx/stdcx.")
+    g.case("stwcx. after the reservation is used (ABA)", ["addi 4, 9, 228", "lwarx 7, 0, 4", "stwcx. 5, 0, 4",
+                                                          "stw 7, 0(4)", "stwcx. 6, 0, 4", "lwz 8, 0(4)"],
+           r5=0x77777777, r6=0x66666666, group="lwarx/stwcx.")
+    g.case("stdcx. after the reservation is used (ABA)", ["addi 4, 9, 248", "ldarx 7, 0, 4", "stdcx. 5, 0, 4",
+                                                          "std 7, 0(4)", "stdcx. 6, 0, 4", "ld 8, 0(4)"],
+           r5=0x7777777777777777, r6=0x6666666666666666, group="ldarx/stdcx.")
+    g.case("stwcx. with no reservation", ["addi 4, 9, 228", "stwcx. 5, 0, 4", "lwz 8, 0(4)"], r5=0x55555555,
+           group="lwarx/stwcx.")
+    g.case("stdcx. with no reservation", ["addi 4, 9, 248", "stdcx. 5, 0, 4", "ld 8, 0(4)"],
+           r5=0x5555555555555555, group="ldarx/stdcx.")
+    g.case("lwarx/stwcx. success", ["addi 4, 9, 224", "lwarx 7, 0, 4", "stwcx. 5, 0, 4", "lwz 8, 0(4)"],
+           r5=0xCAFEF00D, group="lwarx/stwcx.")
+    g.case("stwcx. without reservation", ["addi 4, 9, 228", "lwarx 7, 0, 4", "stwcx. 5, 0, 4", "stwcx. 6, 0, 4",
+                                          "lwz 8, 0(4)"], r5=0x11111111, r6=0x22222222, group="lwarx/stwcx.")
+    g.case("ldarx/stdcx. success", ["addi 4, 9, 240", "ldarx 7, 0, 4", "stdcx. 5, 0, 4", "ld 8, 0(4)"],
+           r5=0x0123456789ABCDEF, group="ldarx/stdcx.")
+    g.case("stdcx. without reservation", ["addi 4, 9, 248", "ldarx 7, 0, 4", "stdcx. 5, 0, 4", "stdcx. 6, 0, 4",
+                                          "ld 8, 0(4)"], r5=0x3333333333333333, r6=0x4444444444444444,
+           group="ldarx/stdcx.")
+    l = g.fresh()
+    g.case("lwarx/stwcx. increment loop x3", ["addi 4, 9, 232", "li 31, 3", "mtctr 31", f"{l}:", "lwarx 7, 0, 4",
+                                              "addi 7, 7, 5", "stwcx. 7, 0, 4", f"bne- 0, {l}", f"bdnz {l}",
+                                              "lwz 8, 0(4)"], group="lwarx/stwcx.")
+    g.case("barriers between store and load", ["addi 4, 9, 236", "stw 5, 0(4)", "sync", "lwsync", "eieio", "isync",
+                                               "lwz 7, 0(4)"], r5=0x5A5AA5A5, group="sync/lwsync/eieio/isync")
+
+
+SUITES = {"int": build_int, "fp": build_fp, "vmx": build_vmx, "flow": build_flow}
+
+
+def build(suites=("int", "fp", "vmx", "flow")):
     g = Gen()
     for s in suites:
         SUITES[s](g)
@@ -571,6 +708,15 @@ def emit(g, out_dir):
         "ppu_diff_kernel:",
         "# r3 = output buffer, r9 = scratch base. Fill scratch with bytes 0x10, 0x11, ...",
         "    mflr 28",
+        "# r2 = TOC (get-PC idiom, so the bytes stay position-independent); r1 = a small stack",
+        "# at the top of the scratch allocation, the caller's r1 kept in r27.",
+        "    bcl 20, 31, .Lk_pc",
+        ".Lk_pc:",
+        "    mflr 2",
+        "    addis 2, 2, (ppu_diffd_toc - .Lk_pc)@ha",
+        "    addi 2, 2, (ppu_diffd_toc - .Lk_pc)@l",
+        "    mr 27, 1",
+        f"    addi 1, 9, {SCRATCH_ALLOC - 16}",
         "    li 31, 0",
         "    li 30, 0x10",
         f"    li 29, {SCRATCH_SIZE}",
@@ -593,13 +739,19 @@ def emit(g, out_dir):
     if cur:
         chunks.append(cur)
     head += [f"    bl ppu_diff_chunk_{i}" for i in range(len(chunks))]
-    head += ["    mtlr 28", "    blr"]
+    head += ["    mr 1, 27", "    mtlr 28", "    blr"]
     body = []
     for i, ch in enumerate(chunks):
         # Local symbols: a global one would leave every `bl` as an unresolved relocation.
-        body += ["    .p2align 4", f"ppu_diff_chunk_{i}:"]
+        # Cases may call helpers (bl) or take addresses (get-PC): keep the chunk's LR in r26.
+        body += ["    .p2align 4", f"ppu_diff_chunk_{i}:", "    mflr 26"]
         body += ["    " + l if not l.endswith(":") and not l.startswith("#") else l for l in ch]
-        body += ["    blr"]
+        body += ["    mtlr 26", "    blr"]
+    for name, lines in g.funcs.items():
+        body += ["    .p2align 4", f"{name}:"]
+        body += ["    " + l if not l.endswith(":") else l for l in lines]
+    # Data: outside every function's bounds (run_diff ends the last function at ppu_diffd_toc).
+    body += ["    .p2align 4", "ppu_diffd_toc:"] + (g.toc or ["    .long 0"]) + g.data
     with open(os.path.join(out_dir, "kernel.S"), "w") as f:
         f.write("\n".join(head + body + [""]))
     meta = {"schema": "recomp_android.ppu-diff-cases", "schema_version": 1, "record_size": RECORD,
@@ -613,7 +765,7 @@ def emit(g, out_dir):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Generate the PPU differential-test kernel")
     ap.add_argument("out_dir")
-    ap.add_argument("--suites", default="int,fp,vmx", help="comma list of: " + ",".join(SUITES))
+    ap.add_argument("--suites", default="int,fp,vmx,flow", help="comma list of: " + ",".join(SUITES))
     a = ap.parse_args()
     os.makedirs(a.out_dir, exist_ok=True)
     print(emit(build(a.suites.split(",")), a.out_dir), "cases")

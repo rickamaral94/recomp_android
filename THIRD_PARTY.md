@@ -4,7 +4,7 @@
 
 | Componente | Commit | Licença | Uso |
 |---|---|---|---|
-| sp00nznet/ps3recomp (submódulo `third_party/ps3recomp`) | `39a36296511c445707adabcd312f0b740cfbd694` | MIT | `tools/ppu_lifter.py` e os cabeçalhos de `runtime/ppu` no teste diferencial (M1-PS3); nada dele vai no APK ainda |
+| sp00nznet/ps3recomp (submódulo `third_party/ps3recomp`) | `39a36296511c445707adabcd312f0b740cfbd694` | MIT | `tools/ppu_lifter.py` e os cabeçalhos de `runtime/ppu` no teste diferencial (M1-PS3); nada dele vai no APK ainda. Os patches de `patches/ps3recomp/` modificam esse código (ver o README de lá) |
 
 ## Dependências de build (baixadas, não versionadas aqui)
 

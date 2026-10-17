@@ -1,16 +1,17 @@
 # M1-PS3 — PPU sintético → lift → arm64, com oráculo
 
 Estado em 2026-10-17. Escopo: **instruções inteiras, de ponto flutuante (FP) e vetoriais
-(VMX/AltiVec) da PPU**. Ficam de fora syscalls, SPU e RSX. Nada disso envolve código de jogo:
+(VMX/AltiVec) da PPU, reservas atômicas e chamadas indiretas**. Ficam de fora syscalls, SPU e RSX. Nada disso envolve código de jogo:
 o binário de teste é gerado.
 
-Três suítes (`gen_cases.py --suites int,fp,vmx`), com 34.461 casos ao todo:
+Quatro suítes (`gen_cases.py --suites int,fp,vmx,flow`), com 34.554 casos ao todo:
 
 | Suíte | Casos | Entradas | Registro |
 |---|---|---|---|
 | int | 23.350 | r4–r6, CR, XER | r7, r8, CR, XER |
 | fp | 5.654 | f1–f3, FPSCR[RN] | f7, f8, CR, FPSCR (só informativo) |
 | vmx | 5.457 | v4–v6, VSCR (NJ, SAT) | v7, CR, VSCR |
+| flow | 93 | r4–r6, CR, XER | r7, r8, CR, XER |
 
 ## O que o teste faz
 
@@ -29,21 +30,22 @@ instrução ausente no Cell.
 
 Cada caso carrega entradas conhecidas (r4–r6, CR, XER), executa uma instrução ou uma sequência
 curta e grava r7, r8, CR e XER. Ao fim também se compara a memória de rascunho (256 bytes).
-Os casos ficam em 75 funções chamadas por `bl` a partir de uma função principal, o que também
+Os casos ficam em funções de até 250 casos, chamadas por `bl` a partir de uma função principal, o que também
 cobre chamada e retorno entre funções recompiladas.
 
 Os campos que a ISA deixa **indefinidos** são mascarados caso a caso, e só eles: a palavra alta
 de `mulhw`/`mulhwu`/`divw`/`divwu` em modo 64 bits, LT/GT/EQ do CR0 nesses casos e o resultado de
 divisão por zero ou com overflow. As flags OV/SO desses casos continuam sendo comparadas.
 
-## Resultado (execução local de 2026-10-17, três suítes)
+## Resultado (execução local de 2026-10-17, quatro suítes)
 
 | Alvo | Casos | Iguais ao oráculo | Divergências conhecidas | Sem explicação | Memória |
 |---|---|---|---|---|---|
-| host x86_64 (clang 18, `-O1`) | 34.461 | 34.317 | 144 | **0** | igual |
-| android-arm64 (NDK 29, `-O1`, qemu-aarch64) | 34.461 | 34.329 | 132 | **0** | igual |
+| host x86_64 (clang 18, `-O1`) | 34.554 | 34.410 | 144 | **0** | igual |
+| android-arm64 (NDK 29, `-O1`, qemu-aarch64) | 34.554 | 34.422 | 132 | **0** | igual |
 
-A suíte de inteiros continua 100% igual nos dois alvos. Todas as diferenças estão em FP e VMX,
+As suítes de inteiros e `flow` estão 100% iguais nos dois alvos (a `flow` depois do patch 0001,
+abaixo). Todas as diferenças estão em FP e VMX,
 e cada uma está explicada em `tests/ps3/ppu_diff/known_divergences.json`, com o número exato de
 casos por alvo. O CI reprova se aparecer uma falha fora da lista ou se algum desses números
 mudar.
@@ -77,6 +79,51 @@ Na primeira rodada, 37 falhas de `vsl`/`vsr` eram **erro meu**: a ISA só define
 quando todos os bytes do vetor de deslocamento são iguais. O gerador agora usa contagens
 replicadas em todos os bytes.
 
+## Suíte `flow`: reservas atômicas e chamadas indiretas
+
+Para cobrir isso, o kernel passou a ter o formato de código de jogo: fica num endereço fixo
+(`0x10000`), monta o próprio TOC em r2 (idioma `bcl 20,31,$+4` + `mflr`, como o gcc do PS3 faz)
+e tem funções auxiliares, tabelas de salto, uma vtable e um descritor OPD. O harness carrega a
+imagem (código + dados) na memória do guest, como um loader faria, e despacha as chamadas
+indiretas pela tabela de funções do lifter. Um destino que não seja início de função
+recompilada aborta o teste.
+
+| Grupo | Casos | O que exercita |
+|---|---|---|
+| `bctrl` | 12 | ponteiro de função obtido por get-PC, `mtctr`/`bctrl` |
+| `blrl` | 12 | o mesmo via LR |
+| `vtable call` | 12 | ponteiro lido de uma tabela na memória (C++ virtual) |
+| `bcctrl` | 8 | `bnectrl` tomado e não tomado |
+| `jump table (rel)` | 8 | `switch` estilo gcc: tabela de deslocamentos com sinal (`lwax`) relativa ao TOC; inclui índice fora da faixa |
+| `jump table (abs)` | 6 | `switch` com tabela de endereços absolutos |
+| `opd call` | 4 | chamada por descritor OPD (endereço + TOC próprio), troca e restauração de r2 |
+| `tail call` | 4 | `bctr` para outra função |
+| `nested call` | 4 | função com stack frame que chama outra (`bl`), restaura LR e r1 |
+| `lwarx/stwcx.` | 12 | sucesso; store sem reserva (sem `lwarx`, com memória zerada, e o segundo `stwcx.` depois de um sucesso); ABA; laço de incremento |
+| `ldarx/stdcx.` | 10 | o mesmo em 64 bits, sem o laço |
+| `sync/lwsync/eieio/isync` | 1 | barreiras entre store e load |
+
+As formas com ponto (`stwcx.`/`stdcx.`) também rodam com XER[SO] ligado, que tem de aparecer
+no CR0.
+
+### Bug encontrado no lifter: tabela de salto lida com o formato errado
+
+Na primeira rodada, o `switch abs` abortava com uma chamada indireta para `0x142dc`, um endereço
+que não é início de função. A causa estava no ps3recomp: `discover_jump_tables` procura o padrão
+da tabela nas 30 instruções antes do `bctr`, sem parar no fim do bloco. Como a função anterior
+era um `switch` relativo, o `add` dela entrava na janela e a tabela absoluta era decodificada
+como tabela de deslocamentos. Num jogo, isso transforma um `switch` num salto para lixo.
+
+`patches/ps3recomp/0001-jump-table-window-stops-at-block-end.patch` corta a janela no último
+`blr`/`bctr`/`b` antes do `bctr` analisado. O submódulo continua no upstream sem alterações:
+`run_diff.py` aplica os patches numa cópia das ferramentas e registra no `report.json` quais
+foram aplicados. O patch ainda não foi enviado ao upstream (ver `patches/ps3recomp/README.md`).
+
+O que este modelo de reserva **não** testa: concorrência. O teste roda numa thread só; ele
+confere a semântica de uma thread (store condicional com e sem reserva, CR0) e que o código
+recompilado chama `ppu_stwcx32`/`ppu_stdcx64`. Se o runtime faz esses stores de forma atômica
+entre threads, como um jogo precisa, é outra pergunta, ainda em aberto.
+
 ## Segundo oráculo: interpretador do RPCS3
 
 `run_rpcs3_oracle.py` empacota o mesmo kernel num ELF de PS3 (`ps3_elf.py`) e o roda no RPCS3
@@ -94,13 +141,13 @@ de desktop, sem interface gráfica e sem firmware.
 - **Build:** `tools/oracle/build_rpcs3.sh` reproduz o build com todos os ajustes. O RPCS3
   (GPL-2.0-only) roda como programa separado e não é ligado ao projeto.
 
-Resultado (execução local de 2026-10-17, 8 s):
+Resultado (execução local de 2026-10-17, quatro suítes, 2 s):
 
 | Comparação | Casos iguais |
 |---|---|
-| qemu-ppc64 × RPCS3 | 33.699 / 34.461 |
-| recompilado x86_64 × RPCS3 | 33.843 / 34.461 |
-| recompilado arm64 × RPCS3 | 33.831 / 34.461 |
+| qemu-ppc64 × RPCS3 | 33.790 / 34.554 |
+| recompilado x86_64 × RPCS3 | 33.934 / 34.554 |
+| recompilado arm64 × RPCS3 | 33.922 / 34.554 |
 
 O que se conclui:
 
@@ -121,6 +168,14 @@ O que se conclui:
    do `vcmpbfp` repete isso. O qemu segue o manual; o RPCS3 (mesmo com Accurate Non-Java Mode) e
    o ps3recomp não. Confiança alta para o `vcmpbfp`, média-alta para as outras três. Sem teste
    em hardware.
+5. **Suíte `flow`:** chamadas indiretas, tabelas de salto, OPD e barreiras: os três concordam
+   em todos os casos. Nas reservas, o RPCS3 diverge em 2 casos (`lwarx/stwcx. success` e
+   `ldarx/stdcx. success`): o store acontece (a memória fica certa), mas o `stwcx.`/`stdcx.`
+   informa falha (CR0[EQ]=0). Nos dois, o caso anterior acabou de fazer um store condicional no
+   mesmo endereço com o mesmo valor. A ISA permite que um store condicional falhe sem motivo
+   aparente, e um jogo sempre repete em laço, então isto não afeta a correção. Mas o
+   comportamento do RPCS3 não é o da ISA na leitura direta. Não investiguei a causa dentro do
+   RPCS3. qemu e código recompilado concordam aqui.
 
 Ainda não testado contra o RPCS3: as instruções que o qemu não tem (`lvlx`/`lvrx`/`stvlx`/`stvrx`)
 e as estimativas (`fres`, `frsqrte`, `vrefp`, `vrsqrtefp`). Para estas, o RPCS3 diz ser "hardware
@@ -154,15 +209,25 @@ build arm64 41 s, execução arm64 no qemu 1 s.
 Defeitos injetados de propósito no código recompilado. Cada um é aplicado no primeiro ponto de
 cada arquivo e depois em todos os pontos:
 
-| Mutante | Detectado |
+| Mutante | Detectado (primeiro ponto / todos os pontos) |
 |---|---|
-| carry calculado com `<=` em vez de `<` | sim (3 e 366 casos diferentes) |
-| forma com ponto deixa de copiar XER[SO] para o CR0 | sim (25 e 7.057 casos) |
-| stores em little-endian no runtime | sim (21.934 casos) |
+| carry calculado com `<=` em vez de `<` | sim (3 / 366 casos diferentes) |
+| forma com ponto deixa de copiar XER[SO] para o CR0 | sim (25 / 7.057) |
+| stores em little-endian no runtime | sim (31.267 / 31.267) |
+| `fmadd` e família calculados sem fusão | sim (23 / 23) |
+| `VSCR[NJ]` ignorado em `ppu_vmx.h` | sim (27 / 27) |
+| `stwcx.`/`stdcx.` ignoram a reserva | sim (1 / 16) |
+| o despachante descarta a chamada indireta | sim (48 / 48) |
 
 Na primeira rodada, o segundo mutante **escapou** quando aplicado num único ponto: o caso
 afetado só rodava com SO desligado. Corrigido no gerador: toda forma com ponto ganha
 automaticamente um caso com SO ligado.
+
+O mutante das reservas também **escapou** na primeira versão da suíte `flow`. O runtime faz o
+store condicional como compare-and-swap do valor lido pelo `lwarx`, e sem reserva a memória nunca
+batia com esse valor, então o store falhava de qualquer jeito. Agora a suíte tem casos em que um
+compare-and-swap aceitaria o store e só a reserva o impede: memória zerada antes de qualquer
+`lwarx`, e o caso ABA (a reserva já foi usada e um store comum devolve o valor antigo).
 
 ## O que isto prova e o que não prova
 
@@ -174,10 +239,11 @@ Não prova:
   partes mascaradas. Comparar com o interpretador do RPCS3/Armadasx3 é o próximo oráculo.
 - **Aparelho:** o binário arm64 rodou em qemu-aarch64, não no Odin 2 Portal.
 - **Flags do FPSCR, estimativas e instruções exclusivas do Cell:** fora (veja acima).
-- **Reservas atômicas** (`lwarx`/`stwcx.`), `mftb`, syscalls e chamadas indiretas
-  (`bctr`/`bctrl`): fora deste teste. O harness aborta se alguma for chamada.
-- **Código de jogo:** fluxo de controle real, jump tables, entradas no meio de função, TOC e OPD
-  ainda não foram exercitados.
+- **Concorrência:** as reservas foram testadas numa thread só (veja a suíte `flow`).
+- **`mftb`, syscalls e imports HLE:** fora deste teste. O harness aborta se algum for chamado.
+- **Código de jogo:** TOC, OPD, tabelas de salto e chamadas indiretas agora foram exercitados
+  com padrões escritos à mão no estilo do gcc. Os padrões reais do compilador do jogo, entradas
+  no meio de função e ponteiros de função vindos de dados só aparecem com o ELF.
 
 Nível na escala do projeto: o teste **compilou** e **passou no host e no arm64 emulado**. Nada
 foi instalado nem executado no aparelho.
@@ -199,7 +265,8 @@ oráculo e do código recompilado.
 1. Suíte só para o RPCS3: `lvlx`/`lvrx`/`stvlx`/`stvrx` e estimativas.
 2. Corrigir as divergências que o ELF do jogo mostrar que importam (patches no ps3recomp,
    enviados também para o upstream).
-3. `lwarx`/`stwcx.` e `ldarx`/`stdcx.`, `mftb`, `bctr`/`bctrl` com um despachante de teste.
-4. Um ELF no formato PS3 (OPD, TOC, imports) com `make_smoke_elf.py` do ps3recomp, passando pelo
-   loader do runtime.
+3. Reservas com várias threads, contra o runtime do ps3recomp (`ppu_stwcx32` atômico de
+   verdade), e `mftb`.
+4. Um ELF no formato PS3 com imports, passando pelo loader do runtime.
 5. Rodar o harness arm64 no Odin 2 Portal (adb ou dentro do app) para sair do qemu.
+6. Enviar o patch 0001 ao upstream, depois de autorizado.

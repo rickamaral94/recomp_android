@@ -24,6 +24,7 @@ escopo.
 | `games/ps3/BLUS30285/` | Perfil do primeiro port: Fight Night Round 4 (EUA) |
 | `tests/ps3/ppu_diff/` | Teste diferencial da PPU: qemu-ppc64 × código recompilado pelo ps3recomp (host e arm64) |
 | `tools/oracle/build_rpcs3.sh` | Build reproduzível do RPCS3 usado como segundo oráculo (interpretador, sem LLVM) |
+| `patches/ps3recomp/` | Correções do ps3recomp aplicadas pelo teste numa cópia das ferramentas (o submódulo fica intacto) |
 | `third_party/ps3recomp/` | Submódulo do ps3recomp (MIT), fixado em `39a36296` |
 | `docs/` | [Fase 0](docs/FASE0-AUDITORIA.md), [build](docs/BUILD.md), [diagnóstico](docs/DIAGNOSTICO.md) |
 
@@ -51,7 +52,7 @@ menu → entrou em gameplay → passou no teste de estabilidade.**
 |---|---|---|
 | Fase 0 | Auditoria e plano | Concluída ([relatório](docs/FASE0-AUDITORIA.md)) |
 | M0 | Esqueleto Android + `common/` + CI | **Compilou** (APK arm64-v8a e testes de host/JVM verdes localmente e no CI, execução 39053037777, commit `456169fd`). Instalar/abrir no Odin 2 Portal: **não verificado** |
-| M1-PS3 | PPU sintético → lift → arm64 | **Inteiros, FP e VMX** (34.461 casos): oráculos qemu-ppc64 e interpretador do RPCS3; inteiros 100% iguais; 7 divergências do lifter em FP/VMX listadas e explicadas; teste de mutação verde ([detalhes](docs/M1-PS3.md)). Faltam atômicas, chamadas indiretas, instruções exclusivas do Cell e rodar no aparelho |
+| M1-PS3 | PPU sintético → lift → arm64 | **Inteiros, FP, VMX, atômicas e chamadas indiretas** (34.554 casos): oráculos qemu-ppc64 e interpretador do RPCS3; inteiros e fluxo de controle 100% iguais; 1 bug do lifter em tabelas de salto corrigido por patch; 7 divergências do lifter em FP/VMX listadas e explicadas; teste de mutação verde ([detalhes](docs/M1-PS3.md)). Faltam concorrência, instruções exclusivas do Cell e rodar no aparelho |
 | M1-PS2 | EE (R5900) sintético → lift → arm64 | Adiado: o foco atual é PS3 |
 | M2 | SPU/DMA (PS3), VU/GS mínimo (PS2) | Não iniciado |
 | M3 | Backend Vulkan por console | Não iniciado |

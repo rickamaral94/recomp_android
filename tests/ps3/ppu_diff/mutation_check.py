@@ -11,6 +11,8 @@ Mutants, each applied at the first site per source file and at every site:
   - the harness stores little-endian instead of big-endian
   - fmadd and friends computed unfused (a*c+b rounded twice)
   - VSCR[NJ] ignored by the VMX float helpers (runtime/ppu/ppu_vmx.h)
+  - stwcx./stdcx. store even without a matching reservation
+  - the harness dispatcher returns from an indirect call without running the target
 A mutant counts as detected when the set of failing cases differs from the unmutated build's
 (host.bin), which may itself contain known divergences. Exit status 0 only when every mutant
 is detected.
@@ -37,6 +39,9 @@ MUTANTS = [
     ("fused multiply-add computed unfused", "lifted", re.escape("double r = fma(a, c, neg_b ? -b : b);"),
      "double r = a * c + (neg_b ? -b : b);"),
     ("VSCR[NJ] ignored", "ppu_vmx.h", re.escape("return ((vscr & VMX_NJ) && "), "return (0 && "),
+    ("stwcx./stdcx. ignore the reservation", "lifted", re.escape("int _sc = (ctx->reserve_addr == (uint32_t)ea) && "),
+     "int _sc = 1 && "),
+    ("indirect call dropped", "harness", re.escape("function_table[i].func(ctx);"), "(void)0;"),
 ]
 
 
@@ -92,7 +97,7 @@ def main():
                 list(pool.map(lambda so: subprocess.run([cxx, *flags, "-c", so[0], "-o", so[1]], check=True),
                               zip(srcs, objs)))
             subprocess.run([cxx, *objs, "-o", exe], check=True)
-            out = subprocess.run([exe, str(n)], capture_output=True).stdout
+            out = subprocess.run([exe, str(n), os.path.join(b, "kernel.bin")], capture_output=True).stdout
             if len(out) != n + meta["scratch_size"]:
                 print(f"{name} [{mode}]: applied at {applied} site(s); mutant did not finish -> detected")
                 continue

@@ -7,7 +7,7 @@ as lowercase hex through sys_tty_write (syscall 403), in lines of LINE_BYTES byt
 "@@<offset hex> <hex>\\n", and exits with sys_process_exit (22). RPCS3 copies TTY output to
 TTY.log, which tty_to_bin() turns back into the same layout as oracle.bin.
 
-Layout: code (stub + kernel) at 0x10000, flags 0x400005 (PPU R+X); data at DATA_BASE,
+Layout: code (kernel, then the stub) at 0x10000, flags 0x400005 (PPU R+X); data at DATA_BASE,
 flags 0x600006 (PPU R+W): OPD of the entry, hex digits, sys_process_param, output buffer,
 scratch, line buffer. The stub uses only syscalls, no PRX imports, so no firmware is needed.
 
@@ -26,6 +26,9 @@ SYS_PROCESS_PARAM_MAGIC = 0x13BCC5F6
 STUB_S = """\
     .abiversion 2
     .text
+kernel:                    # at CODE_BASE, as in the lifted code and the qemu oracle
+    .incbin "{KERNEL}"
+    .p2align 4
     .globl _start
 _start:
     lis 3, {OUT}@h
@@ -106,9 +109,6 @@ _start:
     li {SYSREG}, {SYS_EXIT}
     sc
     b .
-    .p2align 4
-kernel:
-    .incbin "{KERNEL}"
 """
 
 
@@ -151,7 +151,9 @@ def build(kernel_path, n_bytes, scratch_size, scratch_alloc, workdir, clang="cla
     code = open(binf, "rb").read()
 
     data = bytearray(0x100)
-    struct.pack_into(">II", data, opd_off, CODE_BASE, 0)                  # OPD of _start: code, TOC
+    start = subprocess.run(["llvm-nm", obj], capture_output=True, text=True, check=True).stdout
+    start_off = next(int(l.split()[0], 16) for l in start.splitlines() if l.split()[-1] == "_start")
+    struct.pack_into(">II", data, opd_off, CODE_BASE + start_off, 0)      # OPD of _start: code, TOC
     data[digits_off:digits_off + 16] = b"0123456789abcdef"
     struct.pack_into(">IIIIiIII", data, param_off, 32, SYS_PROCESS_PARAM_MAGIC, 0x00009000, 0x00250001,
                      1001, 0x10000, 0x100000, 0)

@@ -34,6 +34,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 BASE = 0x10000
 OUT_ADDR, SCRATCH_ADDR = 0x30000000, 0x20000000
+ORACLE_LD = """\
+PHDRS {{ text PT_LOAD FLAGS(5); scratch PT_LOAD FLAGS(6); out PT_LOAD FLAGS(6); }}
+SECTIONS {{
+  . = {base:#x};
+  .text : {{ *(.text .text.*) }} :text
+  .branch_lt : {{ *(.branch_lt) }} :text
+  .scratch {scratch:#x} (NOLOAD) : {{ *(.scratch) }} :scratch
+  .outbuf {out:#x} (NOLOAD) : {{ *(.outbuf) }} :out
+}}
+"""
 
 
 def run(cmd, **kw):
@@ -205,9 +215,12 @@ def main():
     run([clang, *ppc, os.path.join(b, "start.S"), "-o", os.path.join(b, "start.o")])
     # The kernel goes first in .text, at BASE: the same address it has in the lifted code and in
     # the RPCS3 executable, so absolute addresses (TOC slots, jump tables) agree in every world.
-    run([lld, "-static", "--image-base=0x0", f"--section-start=.text={BASE:#x}",
-         f"--section-start=.outbuf={OUT_ADDR:#x}", f"--section-start=.scratch={SCRATCH_ADDR:#x}",
-         os.path.join(b, "kernel.o"), os.path.join(b, "start.o"), "-o", os.path.join(b, "oracle.elf")])
+    # The linker script keeps the ELF headers out of every segment: with the default layout they
+    # would be loaded at 0x0, below vm.mmap_min_addr, and qemu fails to map the file unless root.
+    with open(os.path.join(b, "oracle.ld"), "w") as f:
+        f.write(ORACLE_LD.format(base=BASE, scratch=SCRATCH_ADDR, out=OUT_ADDR))
+    run([lld, "-static", "-T", os.path.join(b, "oracle.ld"), os.path.join(b, "kernel.o"), os.path.join(b, "start.o"),
+         "-o", os.path.join(b, "oracle.elf")])
     nm_elf = subprocess.run([tool("llvm-nm"), os.path.join(b, "oracle.elf")], capture_output=True, text=True,
                             check=True).stdout
     if not any(l.split()[-1] == "ppu_diff_kernel" and int(l.split()[0], 16) == BASE for l in nm_elf.splitlines()):

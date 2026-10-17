@@ -107,8 +107,10 @@ Android.
 
 1. ~~Inventário do dump~~ — feito (`inventory/disc-01.00.json`).
 2. ~~Pacote de diagnóstico do Armadasx3~~: feito (seção acima).
-3. Para a análise estática (M2 deste jogo), o executável em claro (ELF) da sua cópia. O projeto
-   não descriptografa nada.
+3. Para a análise estática, o executável em claro (ELF) da sua cópia. O envio a este ambiente
+   foi autorizado em 2026-10-17. O projeto não descriptografa nada. Caminho conhecido: o RPCS3 de
+   desktop, em *Utilities › Decrypt PS3 Binaries*, aplicado ao `PS3_GAME/USRDIR/EBOOT.BIN` da
+   ISO, gera `EBOOT.elf`. O hash dele vai para `elf_sha256` no `profile.toml`.
 
 ## Regras deste perfil
 

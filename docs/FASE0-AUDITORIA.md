@@ -228,6 +228,10 @@ e quente identificados.
 3. REA com jogos comerciais: o usuário **aceita explicitamente** que dados derivados (pseudocódigo,
    assembly, nomes, endereços) vão para o provedor do agente. Os **binários e assets do jogo
    continuam fora**: nada de upload do dump, e nada de código lifted no repositório.
+4. Análise do executável: em 2026-10-17 o usuário autorizou **enviar o ELF em claro do jogo a
+   este ambiente em nuvem** para a análise estática. Continua valendo: o projeto não
+   descriptografa nada. O ELF vem de uma ferramenta que já existe, usada pelo usuário na própria
+   cópia. O ELF e o código gerado a partir dele não entram no repositório nem no CI.
 
 Texto original das perguntas:
 

@@ -1,7 +1,21 @@
 # Fight Night Round 4 — BLUS30285 (PS3, EUA)
 
-Perfil do port. Estado: **none**. Nenhuma análise ou recompilação foi feita: o dump ainda não foi
-identificado nem analisado.
+Perfil do port. Estado: **none**. O dump foi identificado (inventário abaixo), mas nenhuma
+análise ou recompilação foi feita.
+
+## Build aceito
+
+Do inventário do usuário (`inventory/disc-01.00.json`, gerado no Odin 2 Portal em 2026-10-17):
+
+| Campo | Valor |
+|---|---|
+| PARAM.SFO | TITLE_ID `BLUS30285`, APP_VER `01.00`, VERSION `01.00`, CATEGORY `DG` (disco), PS3_SYSTEM_VER `02.7600` |
+| ISO | 4.755.423.232 bytes, SHA-256 `878e75f1…5fb00c` |
+| EBOOT.BIN | 18.743.896 bytes, **SELF** (magic `SCE`), SHA-256 `e49c8099…8284b3` |
+
+A ISO é legível como ISO 9660 em claro (o PARAM.SFO e o EBOOT foram lidos direto). O EBOOT é
+o SELF assinado do disco: a análise estática precisa do ELF que o usuário extrair dele.
+Sem atualização instalada: o port é para a versão 01.00.
 
 ## O que já se sabe (com fonte)
 
@@ -36,10 +50,7 @@ Android.
 
 ## Próximos passos (precisam do usuário)
 
-1. Na sua máquina, rodar o inventário no seu dump e mandar o JSON, que só tem hashes e metadados:
-   ```sh
-   python3 tools/ps3/inventory.py /caminho/do/jogo_ou.iso -o BLUS30285-inventory.json
-   ```
+1. ~~Inventário do dump~~ — feito (`inventory/disc-01.00.json`).
 2. Mandar um pacote de diagnóstico do Armadasx3 de uma sessão desse jogo (por exemplo o 101112).
    O log traz o hash PPU, os módulos PRX carregados, as funções HLE chamadas e as threads SPU.
    É a primeira lista de imports e subsistemas, sem tocar no binário.

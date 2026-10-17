@@ -1,0 +1,30 @@
+{
+  "schema": "recomp_android.ps3-inventory",
+  "schema_version": 1,
+  "source_kind": "iso",
+  "param_sfo": {
+    "TITLE_ID": "BLUS30285",
+    "TITLE": "FIGHT NIGHT ROUND 4",
+    "APP_VER": "01.00",
+    "VERSION": "01.00",
+    "CATEGORY": "DG",
+    "PS3_SYSTEM_VER": "02.7600"
+  },
+  "files": [
+    {
+      "path": "PS3_GAME/PARAM.SFO",
+      "size": 1232,
+      "sha256": "508593a76f35d7509953e6f9315dceba3e7f1767595ce4d979e62fc4ad91ea76"
+    },
+    {
+      "path": "PS3_GAME/USRDIR/EBOOT.BIN",
+      "size": 18743896,
+      "sha256": "e49c80995dcce86c0b4d67c0cc1b9295f912963d645a431d777c7efcbd8284b3",
+      "format": "SELF (signed; encrypted unless fake-signed)"
+    }
+  ],
+  "iso": {
+    "size": 4755423232,
+    "sha256": "878e75f170a33bef88768e8081be19aed02087a5c5c666026941d3147b5fb00c"
+  }
+}

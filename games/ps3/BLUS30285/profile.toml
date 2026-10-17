@@ -1,29 +1,34 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Port profile: Fight Night Round 4 (PS3, USA). Facts carry a source; unknowns stay empty.
-# Nothing here comes from the game files yet (no dump analysed). See README.md.
+# Game data so far: only the user's inventory (metadata + hashes). See README.md.
 
 [game]
 title = "Fight Night Round 4"
 serial = "BLUS30285"
 region = "US"
 media = "disc"
-app_ver = ""            # from PARAM.SFO via tools/ps3/inventory.py — not yet provided
-version = ""
-ps3_system_ver = ""
+app_ver = "01.00"       # PARAM.SFO, inventory/disc-01.00.json
+version = "01.00"
+ps3_system_ver = "02.7600"
 
 # Accepted builds. A port is tied to exact executable bytes: an entry is added only from the
 # user's own inventory.py output. Other builds (updates, BLES00538 EU) are separate entries.
 [[game.builds]]
-label = ""
-eboot_sha256 = ""       # SHA-256 of PS3_GAME/USRDIR/EBOOT.BIN as dumped (SELF)
-eboot_format = ""
-param_sfo_sha256 = ""
+label = "disc 01.00, no update (user dump, inventory 2026-10-17)"
+inventory = "inventory/disc-01.00.json"
+iso_size = 4755423232
+iso_sha256 = "878e75f170a33bef88768e8081be19aed02087a5c5c666026941d3147b5fb00c"
+eboot_size = 18743896
+eboot_sha256 = "e49c80995dcce86c0b4d67c0cc1b9295f912963d645a431d777c7efcbd8284b3"  # as dumped (SELF)
+eboot_format = "SELF (signed; magic SCE)"
+param_sfo_sha256 = "508593a76f35d7509953e6f9315dceba3e7f1767595ce4d979e62fc4ad91ea76"
+elf_sha256 = ""        # plain ELF the user extracts from this SELF — not yet provided
 rpcs3_ppu_hash = ""     # "PPU-…" line from an RPCS3/Armadasx3 log of the same build
 
 [status]
 # compiled, installed, opened, profile_loaded, reached_menu, reached_gameplay, stability_passed
 level = "none"
-note = "profile created; no analysis or recompilation done"
+note = "dump identified (inventory); no analysis or recompilation done"
 
 # Per-subsystem coverage of the recompiled port. "not_started" until there is evidence.
 [subsystems]

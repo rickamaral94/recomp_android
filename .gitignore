@@ -18,3 +18,7 @@
 *.sprx
 *.rap
 *.pkg
+
+# Python
+__pycache__/
+*.pyc

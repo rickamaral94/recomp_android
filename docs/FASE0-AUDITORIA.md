@@ -224,8 +224,7 @@ e quente identificados.
 **Respondidas em 2026-10-17:**
 
 1. Licença: **GPL-3.0-or-later** (arquivo `LICENSE`).
-2. Console: "p23", lido como **PS2 e PS3 em trilhas separadas**. O M0 é comum aos dois. A ordem do
-   M1 fica a confirmar.
+2. Console: **PS3** (o usuário corrigiu "p23" para "ps3"). O PS2 fica adiado.
 3. REA com jogos comerciais: o usuário **aceita explicitamente** que dados derivados (pseudocódigo,
    assembly, nomes, endereços) vão para o provedor do agente. Os **binários e assets do jogo
    continuam fora**: nada de upload do dump, e nada de código lifted no repositório.

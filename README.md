@@ -45,9 +45,9 @@ menu → entrou em gameplay → passou no teste de estabilidade.**
 | # | Marco | Estado |
 |---|---|---|
 | Fase 0 | Auditoria e plano | Concluída ([relatório](docs/FASE0-AUDITORIA.md)) |
-| M0 | Esqueleto Android + `common/` + CI | **Compilou** (APK arm64-v8a e testes de host/JVM verdes localmente). Instalar/abrir no Odin 2 Portal: **não verificado** |
+| M0 | Esqueleto Android + `common/` + CI | **Compilou** (APK arm64-v8a e testes de host/JVM verdes localmente e no CI, execução 39053037777, commit `456169fd`). Instalar/abrir no Odin 2 Portal: **não verificado** |
 | M1-PS3 | PPU sintético → lift → arm64 | Não iniciado |
-| M1-PS2 | EE (R5900) sintético → lift → arm64 | Não iniciado |
+| M1-PS2 | EE (R5900) sintético → lift → arm64 | Adiado: o foco atual é PS3 |
 | M2 | SPU/DMA (PS3), VU/GS mínimo (PS2) | Não iniciado |
 | M3 | Backend Vulkan por console | Não iniciado |
 

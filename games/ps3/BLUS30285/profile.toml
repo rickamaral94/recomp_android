@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Port profile: Fight Night Round 4 (PS3, USA). Facts carry a source; unknowns stay empty.
+# Nothing here comes from the game files yet (no dump analysed). See README.md.
+
+[game]
+title = "Fight Night Round 4"
+serial = "BLUS30285"
+region = "US"
+media = "disc"
+app_ver = ""            # from PARAM.SFO via tools/ps3/inventory.py — not yet provided
+version = ""
+ps3_system_ver = ""
+
+# Accepted builds. A port is tied to exact executable bytes: an entry is added only from the
+# user's own inventory.py output. Other builds (updates, BLES00538 EU) are separate entries.
+[[game.builds]]
+label = ""
+eboot_sha256 = ""       # SHA-256 of PS3_GAME/USRDIR/EBOOT.BIN as dumped (SELF)
+eboot_format = ""
+param_sfo_sha256 = ""
+rpcs3_ppu_hash = ""     # "PPU-…" line from an RPCS3/Armadasx3 log of the same build
+
+[status]
+# compiled, installed, opened, profile_loaded, reached_menu, reached_gameplay, stability_passed
+level = "none"
+note = "profile created; no analysis or recompilation done"
+
+# Per-subsystem coverage of the recompiled port. "not_started" until there is evidence.
+[subsystems]
+ppu_lift = "not_started"
+spu_programs = "not_started"     # emulator evidence: six busy Job Manager SPU threads
+lv2_syscalls = "not_started"
+hle_modules = "not_started"      # list comes from the import table (pending analysis)
+rsx_vulkan = "not_started"
+audio = "not_started"
+input = "not_started"
+video_playback = "not_started"
+save_data = "not_started"
+
+# Reference: the same game under emulation on the target device. Used as the A/B baseline the
+# port has to beat; not a property of the port.
+[baseline.armadasx3]
+source = "rickamaral94/Armadasx3 docs/armadasx3/COMPATIBILIDADE.md @ 79102d689ef910b91081cd4693783aabfc9094ca"
+device = "AYN Odin 2 Portal"
+build = "99a829d2 (ThinLTO)"
+date = "2026-10-16"
+fps_avg = 50.9
+frame_time_p50_ms = 18.2
+frame_time_p99_ms = 34.7
+rating = "3-jogavel-com-problemas"
+settings = "default + Accurate SPU Reservations off"
+
+[baseline.rpcs3_compat_db]
+source = "https://rpcs3.net/compatibility?api=v1&g=BLUS30285 (queried 2026-10-17)"
+status = "Ingame"
+date = "2018-11-18"
+commit = "65ca934452726ab8a667fe6a9c903489ddb67da9"

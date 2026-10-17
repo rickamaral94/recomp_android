@@ -20,6 +20,8 @@ escopo.
 | `common/` | C++ compartilhado pelos dois consoles: log, `report.json`, inventário Vulkan |
 | `tests/host/` | Testes de host (sem dependências) e o CLI `recomp-report` |
 | `tools/check_report.py` | Validador do `report.json` (também aceita o ZIP exportado) |
+| `tools/ps3/inventory.py` | Identifica um dump de PS3 (pasta ou ISO) localmente: PARAM.SFO e hashes, sem copiar nem descriptografar |
+| `games/ps3/BLUS30285/` | Perfil do primeiro port: Fight Night Round 4 (EUA) |
 | `docs/` | [Fase 0](docs/FASE0-AUDITORIA.md), [build](docs/BUILD.md), [diagnóstico](docs/DIAGNOSTICO.md) |
 
 Os pipelines `ps2/` e `ps3/` serão independentes (M1+). Nada específico de um console entra em

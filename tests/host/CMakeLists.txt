@@ -24,3 +24,8 @@ if(Python3_FOUND)
             -DCHECKER=${PROJECT_SOURCE_DIR}/tools/check_report.py
             -P ${CMAKE_CURRENT_SOURCE_DIR}/run_report_check.cmake)
 endif()
+
+if(Python3_FOUND)
+    add_test(NAME tools_ps3_inventory
+        COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/tools/test_ps3_inventory.py)
+endif()

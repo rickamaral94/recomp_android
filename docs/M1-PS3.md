@@ -58,7 +58,7 @@ mudar.
 | `stfs-rounds-instead-of-bit-conversion` | lifter | `stfs` usa um cast `(float)`, que arredonda, estoura para inf e silencia sNaN. A ISA manda recortar os bits | 6 / 6 |
 | `vmx-fma-snan-payload` | lifter | `vmaddfp`/`vnmsubfp` com sNaN perdem o payload (`0x7fc00000` em vez de `0x7fc00001`) | 48 / 48 |
 | `vctuxs-sat-on-negative-fraction` | lifter | `vctuxs` de um valor em (−1, 0) liga `VSCR[SAT]`; o vetor resultante está certo | 2 / 2 |
-| `vcmpfp-nj-denormal-uncertain` | **oráculo incerto** | com NJ=1, o qemu trata denormal como zero nas comparações de float; o lifter não. Não sei qual dos dois reproduz o Cell | 18 / 18 |
+| `vcmpfp-nj-denormal-not-flushed` | lifter | com NJ=1, as comparações de float vetoriais não zeram os operandos denormais. O manual do Cell manda zerar (ver abaixo) | 18 / 18 |
 
 Impacto esperado num jogo (inferência, a confirmar no ELF):
 - **Baixo:** jogos quase nunca mudam o modo de arredondamento, carregam sNaN ou leem o SAT.
@@ -76,6 +76,58 @@ que o POWER7 não tem.
 Na primeira rodada, 37 falhas de `vsl`/`vsr` eram **erro meu**: a ISA só define o resultado
 quando todos os bytes do vetor de deslocamento são iguais. O gerador agora usa contagens
 replicadas em todos os bytes.
+
+## Segundo oráculo: interpretador do RPCS3
+
+`run_rpcs3_oracle.py` empacota o mesmo kernel num ELF de PS3 (`ps3_elf.py`) e o roda no RPCS3
+de desktop, sem interface gráfica e sem firmware.
+
+- **Versão:** RPCS3 upstream `26098fb42d090cd522b4afcf3b754dd987c82978` (2026-10-10), o commit
+  com que o Armadasx3 está sincronizado.
+- **Configuração:** só o interpretador estático (build sem LLVM), com todas as opções de
+  precisão da PPU ligadas: Set Saturation Bit, Accurate Non-Java Mode, Set FPCC Bits, Accurate
+  Vector NaN Values, Vector NaN Handling, Accurate DFMA, Accurate Vector Estimates.
+- **Bibliotecas:** as 76 bibliotecas de firmware que o RPCS3 carrega em LLE por padrão ficam em
+  HLE, porque o kernel não importa nenhuma.
+- **Saída:** os resultados voltam em hexadecimal pela TTY. O stub de saída foi conferido no qemu,
+  com bytes idênticos ao `oracle.bin`.
+- **Build:** `tools/oracle/build_rpcs3.sh` reproduz o build com todos os ajustes. O RPCS3
+  (GPL-2.0-only) roda como programa separado e não é ligado ao projeto.
+
+Resultado (execução local de 2026-10-17, 8 s):
+
+| Comparação | Casos iguais |
+|---|---|
+| qemu-ppc64 × RPCS3 | 33.699 / 34.461 |
+| recompilado x86_64 × RPCS3 | 33.843 / 34.461 |
+| recompilado arm64 × RPCS3 | 33.831 / 34.461 |
+
+O que se conclui:
+
+1. **Inteiros e VMX:** fora das divergências conhecidas, os três (qemu, RPCS3 e código
+   recompilado) concordam em todos os casos.
+2. **Divergências conhecidas:** nas sete, o RPCS3 dá o mesmo resultado que o código recompilado.
+   Isso não valida nenhum dos dois, só mostra que fazem as mesmas simplificações. Cada entrada
+   de `known_divergences.json` registra o veredito do RPCS3 no campo `rpcs3`.
+3. **NaN em FP escalar:** em 630 casos o RPCS3 discorda tanto do qemu quanto do código
+   recompilado, que concordam entre si. O padrão é sempre o mesmo: o NaN padrão de operação
+   inválida sai `0xfff8…`, o do x86 hospedeiro, e `fmsub`/`fnmadd`/`fnmsub` invertem o sinal de um
+   NaN propagado. A ISA diz que a negação não se aplica a NaN. Conclusão: nos bits de NaN em FP
+   escalar, o interpretador do RPCS3 no x86 **não serve de referência**.
+4. **NJ nas comparações de vetor:** resolvido pela documentação, não pelo voto dos oráculos. O
+   *Vector/SIMD Multimedia Extension Technology Programming Environments Manual*, edição do Cell
+   (v2.07c, 2006-10-26), seção 3.2.1.2 "Non-Java Mode", diz: "denormalized input operands are
+   flushed to the correctly signed zero (±0.0) before being used by the instruction". A página
+   do `vcmpbfp` repete isso. O qemu segue o manual; o RPCS3 (mesmo com Accurate Non-Java Mode) e
+   o ps3recomp não. Confiança alta para o `vcmpbfp`, média-alta para as outras três. Sem teste
+   em hardware.
+
+Ainda não testado contra o RPCS3: as instruções que o qemu não tem (`lvlx`/`lvrx`/`stvlx`/`stvrx`)
+e as estimativas (`fres`, `frsqrte`, `vrefp`, `vrsqrtefp`). Para estas, o RPCS3 diz ser "hardware
+exact" com Accurate Vector Estimates. Elas precisam de uma suíte própria que só rode no RPCS3.
+
+O oráculo RPCS3 ainda não roda no CI: o build leva cerca de 40 minutos sem cache. Hoje roda
+localmente com `build_rpcs3.sh` + `run_rpcs3_oracle.py`.
 
 ### Suíte de inteiros (primeira versão deste marco)
 
@@ -144,8 +196,7 @@ oráculo e do código recompilado.
 
 ## Próximos passos
 
-1. Oráculo RPCS3 (interpretador PPU do Armadasx3), para decidir o caso NJ e cobrir
-   `lvlx`/`lvrx`/`stvlx`/`stvrx` e as estimativas.
+1. Suíte só para o RPCS3: `lvlx`/`lvrx`/`stvlx`/`stvrx` e estimativas.
 2. Corrigir as divergências que o ELF do jogo mostrar que importam (patches no ps3recomp,
    enviados também para o upstream).
 3. `lwarx`/`stwcx.` e `ldarx`/`stdcx.`, `mftb`, `bctr`/`bctrl` com um despachante de teste.

@@ -27,5 +27,13 @@ for, o commit fixado e a licença entram nesta tabela.
 | andrebrumdev/gow2-recomp | `a787912c7b2e2f61bb387c9c22722a93e6c5ee3c` | MIT | referência de port por jogo e de Android/Vulkan |
 | morluto/rea | `3fa972af7c7cb6cf014ffc426bdf7130dc6f2fd2` (v6.5.0) | MIT | análise assistida (ferramenta externa, não é ligada ao app) |
 
+Ferramentas externas usadas só como programas separados, nunca ligadas ao projeto:
+
+| Ferramenta | Versão | Licença | Uso |
+|---|---|---|---|
+| RPCS3 | `26098fb42d090cd522b4afcf3b754dd987c82978` | GPL-2.0-only | segundo oráculo da PPU (`tools/oracle/build_rpcs3.sh`, `tests/ps3/ppu_diff/run_rpcs3_oracle.py`) |
+| Qt (via aqtinstall, download.qt.io) | 6.9.3 | LGPL-3.0 | só para compilar o RPCS3 do oráculo |
+| qemu-user | 8.2.2 (Ubuntu) | GPL-2.0 | oráculo qemu-ppc64 e execução do binário arm64 nos testes |
+
 O Armadasx3 (GPL-2.0-only) é usado só como oráculo de comportamento, rodando separadamente.
 O código dele não pode ser combinado com o código GPL-3.0 deste projeto.

@@ -2,7 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Second oracle: run the differential-test kernel in RPCS3's PPU interpreter.
 
-Usage: run_rpcs3_oracle.py --build BUILD_DIR --rpcs3 PATH/TO/rpcs3 [--timeout S]
+Usage: run_rpcs3_oracle.py --build BUILD_DIR --rpcs3 PATH/TO/rpcs3 --rpcs3-src RPCS3_CHECKOUT [--timeout S]
+
+No firmware is used. RPCS3 refuses to boot without it while any firmware library is set to LLE,
+so every library its g_prx_list marks LLE-by-default (read from RPCS3_CHECKOUT's
+rpcs3/Emu/Cell/lv2/sys_prx.cpp) is forced to HLE. The kernel imports none of them.
 
 BUILD_DIR is a directory run_diff.py already filled (kernel.bin, cases.json, oracle.bin and the
 lifted outputs host.bin / arm64.bin). The kernel is wrapped in a PS3 executable (ps3_elf.py),
@@ -51,6 +55,15 @@ Miscellaneous:
 """
 
 
+def lle_default_libs(rpcs3_src):
+    src = open(os.path.join(rpcs3_src, "rpcs3", "Emu", "Cell", "lv2", "sys_prx.cpp")).read()
+    i = src.index("g_prx_list")
+    pairs = re.findall(r'\{\s*"([^"]+)"\s*,\s*(\d)\s*\}', src[i:src.index("};", i)])
+    if not pairs:
+        raise SystemExit("could not read g_prx_list from sys_prx.cpp")
+    return [name for name, lle in pairs if lle == "0"]
+
+
 def failing_set(meta, a, b):
     return {f["case"]: f for f in run_diff.compare(meta, a, b)["all_failures"]}
 
@@ -59,7 +72,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--build", required=True)
     ap.add_argument("--rpcs3", required=True)
+    ap.add_argument("--rpcs3-src", required=True, help="the RPCS3 checkout the binary was built from")
     ap.add_argument("--timeout", type=int, default=900)
+    ap.add_argument("--home", default=os.path.expanduser("~/.cache/recomp_android-rpcs3-oracle"),
+                    help="isolated RPCS3 home; RPCS3 refuses to run from a temporary directory such as /tmp")
     a = ap.parse_args()
     b = os.path.abspath(a.build)
     with open(os.path.join(b, "cases.json")) as f:
@@ -70,12 +86,14 @@ def main():
     with open(elf, "wb") as f:
         f.write(img)
 
-    home = os.path.join(b, "rpcs3-home")
+    home = os.path.abspath(a.home)
     shutil.rmtree(home, ignore_errors=True)
     os.makedirs(os.path.join(home, "config", "rpcs3"))
     os.makedirs(os.path.join(home, "cache", "rpcs3"))
+    libs = lle_default_libs(a.rpcs3_src)
+    config = CONFIG_YML.replace("Core:\n", "Core:\n  Libraries Control: [" + ", ".join(f'"{x}:hle"' for x in libs) + "]\n", 1)
     with open(os.path.join(home, "config", "rpcs3", "config.yml"), "w") as f:
-        f.write(CONFIG_YML)
+        f.write(config)
     env = dict(os.environ, HOME=home, XDG_CONFIG_HOME=os.path.join(home, "config"),
                XDG_CACHE_HOME=os.path.join(home, "cache"), QT_QPA_PLATFORM="offscreen")
     tty = os.path.join(home, "cache", "rpcs3", "TTY.log")
@@ -113,8 +131,8 @@ def main():
 
     version = ""
     if os.path.exists(log):
-        m = re.search(r"^RPCS3 v\S+.*$", open(log, errors="replace").read(), re.M)
-        version = m.group(0) if m else ""
+        m = re.search(r"^\ufeff?(RPCS3 v\S+.*)$", open(log, encoding="utf-8", errors="replace").read(), re.M)
+        version = m.group(1).strip() if m else ""
 
     qemu = open(os.path.join(b, "oracle.bin"), "rb").read()
     oracles = failing_set(meta, qemu, data)
@@ -151,7 +169,7 @@ def main():
     by_group = collections.Counter(meta["cases"][c]["group"] for c in oracles)
     report = {
         "schema": "recomp_android.ppu-diff-rpcs3-report", "schema_version": 1,
-        "rpcs3": version, "rpcs3_config": CONFIG_YML, "elapsed_s": round(elapsed, 1),
+        "rpcs3": version, "rpcs3_config": CONFIG_YML, "forced_hle_libraries": len(libs), "elapsed_s": round(elapsed, 1),
         "cases": meta["count"],
         "oracles_disagree": {"count": len(oracles), "by_group": dict(by_group.most_common()),
                              "samples": [oracles[k] for k in sorted(oracles)[:150]]},

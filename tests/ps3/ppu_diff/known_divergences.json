@@ -1,56 +1,116 @@
 {
  "schema": "recomp_android.ppu-diff-known-divergences",
  "schema_version": 1,
- "comment": "Differences from the oracle that are understood and not yet fixed. Each entry pins the exact number of failing cases per target; run_diff.py fails on any failure no entry explains and on any count that changed (a fix must update this file). ps3recomp commit: 39a36296.",
+ "comment": "Differences from the oracle that are understood and not yet fixed. Each entry pins the exact number of failing cases per target; run_diff.py fails on any failure no entry explains and on any count that changed (a fix must update this file). ps3recomp commit: 39a36296. Each entry's 'rpcs3' field records what RPCS3's interpreter does (run_rpcs3_oracle.py).",
  "entries": [
   {
    "id": "fp-rounding-mode-ignored",
    "class": "lifter",
-   "match": {"name_regex": " RN=[123]$"},
+   "match": {
+    "name_regex": " RN=[123]$"
+   },
    "note": "FPSCR[RN] other than round-to-nearest is ignored by fadd/fmul/fdiv/fadds/fmuls/fmadd/frsp/fctiw/fctid/fcfid: results are always rounded to nearest. Games normally keep the PS3 default (nearest); check the game for mtfsf/mtfsfi before relying on this.",
-   "expect": {"host-x86_64": 56, "android-arm64 (qemu-aarch64)": 56}
+   "expect": {
+    "host-x86_64": 56,
+    "android-arm64 (qemu-aarch64)": 56
+   },
+   "rpcs3": "RPCS3 interpreter (26098fb42, accuracy options on) also ignores RN: same result as the lifted code in all 56 cases."
   },
   {
    "id": "fsqrt-default-nan-sign-x86",
    "class": "lifter",
-   "match": {"groups": ["fsqrt", "fsqrts"]},
+   "match": {
+    "groups": [
+     "fsqrt",
+     "fsqrts"
+    ]
+   },
    "note": "fsqrt of a negative number or -inf returns the host's default NaN. x86 produces 0xfff8... (negative), PowerPC 0x7ff8.... arm64's default NaN is already 0x7ff8..., so the Android target matches.",
-   "expect": {"host-x86_64": 12, "android-arm64 (qemu-aarch64)": 0}
+   "expect": {
+    "host-x86_64": 12,
+    "android-arm64 (qemu-aarch64)": 0
+   },
+   "rpcs3": "RPCS3 on x86 also returns 0xfff8... here (it uses the host's NaN)."
   },
   {
    "id": "lfs-quiets-snan",
    "class": "lifter",
-   "match": {"groups": ["lfs"]},
+   "match": {
+    "groups": [
+     "lfs"
+    ]
+   },
    "note": "lfs of a single-precision signalling NaN sets the quiet bit (host float->double conversion). The ISA converts without quieting.",
-   "expect": {"host-x86_64": 2, "android-arm64 (qemu-aarch64)": 2}
+   "expect": {
+    "host-x86_64": 2,
+    "android-arm64 (qemu-aarch64)": 2
+   },
+   "rpcs3": "RPCS3 interpreter quiets the sNaN too (same as the lifted code)."
   },
   {
    "id": "stfs-rounds-instead-of-bit-conversion",
    "class": "lifter",
-   "match": {"groups": ["stfs"]},
+   "match": {
+    "groups": [
+     "stfs"
+    ]
+   },
    "note": "stfs converts with a C (float) cast, which rounds, overflows to inf and quiets sNaN. The ISA store conversion takes FRS[0:1] || FRS[5:34] (truncation) for values outside single range and NaNs. Values already rounded to single (frsp, single ops) are unaffected.",
-   "expect": {"host-x86_64": 6, "android-arm64 (qemu-aarch64)": 6}
+   "expect": {
+    "host-x86_64": 6,
+    "android-arm64 (qemu-aarch64)": 6
+   },
+   "rpcs3": "RPCS3 interpreter rounds too (same as the lifted code)."
   },
   {
    "id": "vmx-fma-snan-payload",
    "class": "lifter",
-   "match": {"groups": ["vmaddfp", "vnmsubfp"]},
+   "match": {
+    "groups": [
+     "vmaddfp",
+     "vnmsubfp"
+    ]
+   },
    "note": "A lane whose input is a signalling NaN returns the default NaN 0x7fc00000; the oracle returns the quieted input (0x7fc00001), keeping the payload.",
-   "expect": {"host-x86_64": 48, "android-arm64 (qemu-aarch64)": 48}
+   "expect": {
+    "host-x86_64": 48,
+    "android-arm64 (qemu-aarch64)": 48
+   },
+   "rpcs3": "RPCS3 interpreter (Accurate Vector NaN Values on) also returns the default NaN (same as the lifted code)."
   },
   {
    "id": "vctuxs-sat-on-negative-fraction",
    "class": "lifter",
-   "match": {"groups": ["vctuxs"]},
+   "match": {
+    "groups": [
+     "vctuxs"
+    ]
+   },
    "note": "vctuxs of a value in (-1, 0) sets VSCR[SAT]; truncation gives 0, which is in range, so the oracle leaves SAT clear. The result vector itself matches.",
-   "expect": {"host-x86_64": 2, "android-arm64 (qemu-aarch64)": 2}
+   "expect": {
+    "host-x86_64": 2,
+    "android-arm64 (qemu-aarch64)": 2
+   },
+   "rpcs3": "RPCS3 interpreter (Set Saturation Bit on) also sets SAT (same as the lifted code)."
   },
   {
-   "id": "vcmpfp-nj-denormal-uncertain",
-   "class": "oracle-uncertain",
-   "match": {"groups": ["vcmpeqfp", "vcmpgefp", "vcmpgtfp", "vcmpbfp"], "name_regex": "\\[NJ\\]$"},
-   "note": "With VSCR[NJ]=1 qemu flushes denormal operands of vector float compares to zero; the lifter compares them as they are. Which one the Cell does is NOT established by this oracle: needs RPCS3's interpreter or hardware.",
-   "expect": {"host-x86_64": 18, "android-arm64 (qemu-aarch64)": 18}
+   "id": "vcmpfp-nj-denormal-not-flushed",
+   "class": "lifter",
+   "match": {
+    "groups": [
+     "vcmpeqfp",
+     "vcmpgefp",
+     "vcmpgtfp",
+     "vcmpbfp"
+    ],
+    "name_regex": "\\[NJ\\]$"
+   },
+   "note": "With VSCR[NJ]=1 the vector float compares (vcmpeqfp/vcmpgefp/vcmpgtfp/vcmpbfp) compare denormal operands as they are. The Cell edition of the Vector/SIMD PEM (v2.07c, 2006-10-26), section 3.2.1.2 'Non-Java Mode', says denormalized input operands are flushed to a correctly signed zero before being used by the instruction; the vcmpbfp page repeats it for the comparison. qemu follows that. Confidence: high for vcmpbfp (explicit), medium-high for the other three (general rule). Not checked on Cell hardware.",
+   "expect": {
+    "host-x86_64": 18,
+    "android-arm64 (qemu-aarch64)": 18
+   },
+   "rpcs3": "RPCS3 interpreter with 'PPU Accurate Non-Java Mode' on also does not flush here (same as the lifted code)."
   }
  ]
 }

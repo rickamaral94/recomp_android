@@ -23,6 +23,7 @@ escopo.
 | `tools/ps3/inventory.py` | Identifica um dump de PS3 (pasta ou ISO) localmente: PARAM.SFO e hashes, sem copiar nem descriptografar |
 | `games/ps3/BLUS30285/` | Perfil do primeiro port: Fight Night Round 4 (EUA) |
 | `tests/ps3/ppu_diff/` | Teste diferencial da PPU: qemu-ppc64 × código recompilado pelo ps3recomp (host e arm64) |
+| `tools/oracle/build_rpcs3.sh` | Build reproduzível do RPCS3 usado como segundo oráculo (interpretador, sem LLVM) |
 | `third_party/ps3recomp/` | Submódulo do ps3recomp (MIT), fixado em `39a36296` |
 | `docs/` | [Fase 0](docs/FASE0-AUDITORIA.md), [build](docs/BUILD.md), [diagnóstico](docs/DIAGNOSTICO.md) |
 
@@ -50,7 +51,7 @@ menu → entrou em gameplay → passou no teste de estabilidade.**
 |---|---|---|
 | Fase 0 | Auditoria e plano | Concluída ([relatório](docs/FASE0-AUDITORIA.md)) |
 | M0 | Esqueleto Android + `common/` + CI | **Compilou** (APK arm64-v8a e testes de host/JVM verdes localmente e no CI, execução 39053037777, commit `456169fd`). Instalar/abrir no Odin 2 Portal: **não verificado** |
-| M1-PS3 | PPU sintético → lift → arm64 | **Instruções inteiras da PPU:** 23.350 de 23.350 casos iguais ao oráculo (qemu-ppc64) no host x86_64 e no arm64 sob qemu-aarch64; teste de mutação verde ([detalhes](docs/M1-PS3.md)). Faltam FP/VMX/atômicas e rodar no aparelho |
+| M1-PS3 | PPU sintético → lift → arm64 | **Inteiros, FP e VMX** (34.461 casos): oráculos qemu-ppc64 e interpretador do RPCS3; inteiros 100% iguais; 7 divergências do lifter em FP/VMX listadas e explicadas; teste de mutação verde ([detalhes](docs/M1-PS3.md)). Faltam atômicas, chamadas indiretas, instruções exclusivas do Cell e rodar no aparelho |
 | M1-PS2 | EE (R5900) sintético → lift → arm64 | Adiado: o foco atual é PS3 |
 | M2 | SPU/DMA (PS3), VU/GS mínimo (PS2) | Não iniciado |
 | M3 | Backend Vulkan por console | Não iniciado |

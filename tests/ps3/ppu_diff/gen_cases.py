@@ -125,7 +125,7 @@ class Gen:
                            "masks": {"r7": f"{mask7:#x}", "r8": f"{mask8:#x}", "cr": f"{cr_mask:#x}", "xer": "0x0"}})
 
     def vcase(self, name, body, v4=0, v5=0, v6=0, vscr=0, cr=0, mask_hi=M64, mask_lo=M64,
-              cr_mask=0xFFFFFFFF, group=None, r4=None):
+              cr_mask=0xFFFFFFFF, group=None, r4_off=None):
         """v4-v6 are 128-bit ints (byte 0 = most significant). v7 is preset to a sentinel."""
         idx = len(self.cases)
         self.lines.append(f"# case {idx}: {name}")
@@ -138,8 +138,8 @@ class Gen:
             self.lines += [f"li 31, {TEMP + 16 * i}", f"lvx {vr}, 9, 31"]
         self.lines += ["mtvscr 0"]
         self.lines += load64("31", cr) + ["mtcrf 0xff, 31"]
-        if r4 is not None:
-            self.lines += load64("4", r4)
+        if r4_off is not None:
+            self.lines += [f"addi 4, 9, {r4_off}"]  # r9-relative: the kernel never assumes where memory is
         self.lines += body if isinstance(body, list) else [body]
         self.lines += ["stvx 7, 0, 3", "mfcr 31", "stw 31, 16(3)",
                        "mfvscr 0", f"li 31, {TEMP + 96}", "stvx 0, 9, 31", f"lwz 31, {TEMP + 108}(9)",
@@ -531,20 +531,21 @@ def build_vmx(g):
     for sh in (0, 1, 7, 8, 15):
         g.vcase(f"vsldoi v7,v4,v5,{sh}", f"vsldoi 7, 4, 5, {sh}", v4=VI[2], v5=VI[6], group="vsldoi")
     # Loads and stores. r4 = scratch + off; scratch holds bytes 0x10.. (stores land at +128..).
-    base = 0x20000000
+    # The scratch base must be 16-byte aligned (lvx/lvsl results depend on the low bits).
+    base = 0
     for off in (0, 3, 8, 13):
-        g.vcase(f"lvx v7,0,r4 (+{off})", "lvx 7, 0, 4", r4=base + off, group="lvx")
-        g.vcase(f"lvsl v7,0,r4 (+{off})", "lvsl 7, 0, 4", r4=base + off, group="lvsl")
-        g.vcase(f"lvsr v7,0,r4 (+{off})", "lvsr 7, 0, 4", r4=base + off, group="lvsr")
+        g.vcase(f"lvx v7,0,r4 (+{off})", "lvx 7, 0, 4", r4_off=base + off, group="lvx")
+        g.vcase(f"lvsl v7,0,r4 (+{off})", "lvsl 7, 0, 4", r4_off=base + off, group="lvsl")
+        g.vcase(f"lvsr v7,0,r4 (+{off})", "lvsr 7, 0, 4", r4_off=base + off, group="lvsr")
     for op, size in (("lvebx", 1), ("lvehx", 2), ("lvewx", 4)):
         for off in range(0, 16, size + (size == 1) * 2):
             ea = off & ~(size - 1)
             elem = ((1 << (8 * size)) - 1) << (8 * (16 - ea - size))   # only the loaded element is defined
-            g.vcase(f"{op} v7,0,r4 (+{off})", f"{op} 7, 0, 4", r4=base + 32 + off,
+            g.vcase(f"{op} v7,0,r4 (+{off})", f"{op} 7, 0, 4", r4_off=base + 32 + off,
                     mask_hi=elem >> 64, mask_lo=elem & M64, group=op)
     for op, size in (("stvebx", 1), ("stvehx", 2), ("stvewx", 4), ("stvx", 16)):
         for off in (0, 4, 9, 14):
-            g.vcase(f"{op} v4,0,r4 (+{off})", [f"{op} 4, 0, 4", "lvx 7, 0, 4"], v4=VI[6], r4=base + 128 + 16 * (size // 4) + off,
+            g.vcase(f"{op} v4,0,r4 (+{off})", [f"{op} 4, 0, 4", "lvx 7, 0, 4"], v4=VI[6], r4_off=base + 128 + 16 * (size // 4) + off,
                     group=op)
     for v in (VSCR_NJ, VSCR_SAT, VSCR_NJ | VSCR_SAT, 0):
         g.vcase(f"mtvscr/mfvscr {v:#x}", "vor 7, 0, 0", vscr=v, group="mtvscr/mfvscr")

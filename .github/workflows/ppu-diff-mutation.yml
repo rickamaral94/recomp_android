@@ -1,0 +1,35 @@
+name: PPU diff mutation check
+
+# Breaks the lifted code on purpose and requires the differential test to notice. Slow (about
+# 20 minutes: ten full rebuilds), so it runs only when the test or the lifter changes, or by hand.
+on:
+  push:
+    paths:
+      - 'tests/ps3/ppu_diff/**'
+      - 'third_party/ps3recomp'
+      - '.github/workflows/ppu-diff-mutation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld llvm qemu-user
+      - name: Differential test (host only)
+        run: python3 -I tests/ps3/ppu_diff/run_diff.py --build build-ppu-diff
+      - name: Mutation check
+        run: python3 -I -u tests/ps3/ppu_diff/mutation_check.py build-ppu-diff

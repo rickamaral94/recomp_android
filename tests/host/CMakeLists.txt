@@ -29,3 +29,10 @@ if(Python3_FOUND)
     add_test(NAME tools_ps3_inventory
         COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/tools/test_ps3_inventory.py)
 endif()
+
+if(Python3_FOUND)
+    foreach(t parse_rpcs3_log hle_coverage)
+        add_test(NAME tools_${t}
+            COMMAND ${Python3_EXECUTABLE} -I ${PROJECT_SOURCE_DIR}/tests/tools/test_${t}.py)
+    endforeach()
+endif()

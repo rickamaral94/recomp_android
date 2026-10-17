@@ -1,0 +1,3259 @@
+{
+ "schema": "recomp_android.hle-coverage",
+ "schema_version": 1,
+ "runtime": "sp00nznet/ps3recomp@39a36296",
+ "criterion": "name match in source (defined / mentioned / absent); not a correctness claim",
+ "ppu_hash": "PPU-9cd5730cfe6d47774b8e4a45dae1fb32c2cb46fb",
+ "serial": "BLUS30285",
+ "imports_total": 408,
+ "imports": {
+  "defined": 296,
+  "mentioned": 34,
+  "absent": 78
+ },
+ "modules": {
+  "cellSpurs": {
+   "imported": 13,
+   "defined": 12,
+   "mentioned": 0,
+   "absent": 1,
+   "absent_names": [
+    "cellSpursGetSpuThreadId"
+   ],
+   "functions": [
+    {
+     "name": "cellSpursDetachLv2EventQueue",
+     "nid": "0x4e66d483",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:814"
+    },
+    {
+     "name": "cellSpursRemoveWorkload",
+     "nid": "0x57e4dec3",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:1571"
+    },
+    {
+     "name": "cellSpursWaitForWorkloadShutdown",
+     "nid": "0x5fd43fe4",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:3091"
+    },
+    {
+     "name": "cellSpursGetSpuThreadId",
+     "nid": "0x6c960f6d",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "_cellSpursAttributeInitialize",
+     "nid": "0x95180230",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:607"
+    },
+    {
+     "name": "cellSpursShutdownWorkload",
+     "nid": "0x98d5b343",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:3084"
+    },
+    {
+     "name": "cellSpursAttributeSetSpuThreadGroupType",
+     "nid": "0xa839a4d9",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:635"
+    },
+    {
+     "name": "cellSpursInitializeWithAttribute",
+     "nid": "0xaa6269a8",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:548"
+    },
+    {
+     "name": "cellSpursAttachLv2EventQueue",
+     "nid": "0xb9bc6207",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:766"
+    },
+    {
+     "name": "cellSpursAddWorkloadWithAttribute",
+     "nid": "0xc0158d8b",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:1454"
+    },
+    {
+     "name": "cellSpursFinalize",
+     "nid": "0xca4c4600",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:560"
+    },
+    {
+     "name": "_cellSpursWorkloadAttributeInitialize",
+     "nid": "0xefeb2679",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:1535"
+    },
+    {
+     "name": "cellSpursReadyCountStore",
+     "nid": "0xf843818d",
+     "status": "defined",
+     "at": "libs/spurs/cellSpurs.c:1819"
+    }
+   ]
+  },
+  "sceNp": {
+   "imported": 30,
+   "defined": 18,
+   "mentioned": 0,
+   "absent": 12,
+   "absent_names": [
+    "sceNpManagerGetTicket",
+    "sceNpBasicGetFriendPresenceByIndex",
+    "sceNpManagerGetSigninId",
+    "sceNpManagerGetTicketParam",
+    "sceNpManagerRequestTicket2",
+    "sceNpBasicSetPresenceDetails",
+    "sceNpBasicAddPlayersHistory",
+    "sceNpBasicRecvMessageAttachmentLoad",
+    "sceNpManagerGetEntitlementById",
+    "sceNpManagerGetAccountRegion",
+    "sceNpBasicRecvMessageAttachment",
+    "sceNpBasicGetBlockListEntry"
+   ],
+   "functions": [
+    {
+     "name": "sceNpManagerGetTicket",
+     "nid": "0x0968aa36",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpBasicGetFriendPresenceByIndex",
+     "nid": "0x32c78a6a",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpManagerGetSigninId",
+     "nid": "0x4210c462",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpTerm",
+     "nid": "0x4885aa18",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:75"
+    },
+    {
+     "name": "sceNpManagerUnregisterCallback",
+     "nid": "0x52a6b523",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:264"
+    },
+    {
+     "name": "sceNpManagerGetTicketParam",
+     "nid": "0x58fa4fcd",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpManagerGetContentRatingFlag",
+     "nid": "0x6ee62ed2",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:279"
+    },
+    {
+     "name": "sceNpManagerRequestTicket2",
+     "nid": "0x8297f1ec",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpManagerGetStatus",
+     "nid": "0xa7bff757",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:228"
+    },
+    {
+     "name": "sceNpBasicGetFriendListEntryCount",
+     "nid": "0xafef640d",
+     "status": "defined",
+     "at": "libs/network/sceNpBasic.c:117"
+    },
+    {
+     "name": "sceNpInit",
+     "nid": "0xbd28fdbf",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:57"
+    },
+    {
+     "name": "sceNpBasicSetPresenceDetails",
+     "nid": "0xbe81c71c",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpManagerRegisterCallback",
+     "nid": "0xe7dcd3b4",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:247"
+    },
+    {
+     "name": "sceNpManagerGetChatRestrictionFlag",
+     "nid": "0xeb7a3d84",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:287"
+    },
+    {
+     "name": "sceNpManagerGetOnlineName",
+     "nid": "0xf42c0df8",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:274"
+    },
+    {
+     "name": "sceNpManagerGetNpId",
+     "nid": "0xfe37a7f4",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:272"
+    },
+    {
+     "name": "sceNpBasicAddPlayersHistory",
+     "nid": "0x168a3117",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpBasicSetPresence",
+     "nid": "0x3f0808aa",
+     "status": "defined",
+     "at": "libs/network/sceNpBasic.c:149"
+    },
+    {
+     "name": "sceNpBasicSendMessageAttachment",
+     "nid": "0x43b989f5",
+     "status": "defined",
+     "at": "libs/network/sceNpBasic.c:180"
+    },
+    {
+     "name": "sceNpBasicRecvMessageAttachmentLoad",
+     "nid": "0x64a704cc",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpBasicGetBlockListEntryCount",
+     "nid": "0x73931bd0",
+     "status": "defined",
+     "at": "libs/network/sceNpBasic.c:229"
+    },
+    {
+     "name": "sceNpManagerGetEntitlementById",
+     "nid": "0xa1709abd",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpBasicUnregisterHandler",
+     "nid": "0xacb9ee8e",
+     "status": "defined",
+     "at": "libs/network/sceNpBasic.c:101"
+    },
+    {
+     "name": "sceNpDrmIsAvailable",
+     "nid": "0xad218faf",
+     "status": "defined",
+     "at": "libs/network/sceNp.c:338"
+    },
+    {
+     "name": "sceNpManagerGetAccountRegion",
+     "nid": "0xb1e0718b",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpBasicRecvMessageAttachment",
+     "nid": "0xb5cb2d56",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpBasicRegisterHandler",
+     "nid": "0xbcc09fe7",
+     "status": "defined",
+     "at": "libs/network/sceNpBasic.c:86"
+    },
+    {
+     "name": "sceNpBasicGetEvent",
+     "nid": "0xe035f7d6",
+     "status": "defined",
+     "at": "libs/network/sceNpBasic.c:78"
+    },
+    {
+     "name": "sceNpBasicSendMessage",
+     "nid": "0xec0a1fbf",
+     "status": "defined",
+     "at": "libs/network/sceNpBasic.c:164"
+    },
+    {
+     "name": "sceNpBasicGetBlockListEntry",
+     "nid": "0xf2b3338a",
+     "status": "absent",
+     "at": null
+    }
+   ]
+  },
+  "libad_async": {
+   "imported": 9,
+   "defined": 0,
+   "mentioned": 0,
+   "absent": 9,
+   "absent_names": [
+    "0x889864b4",
+    "0x42fdbdfb",
+    "sceAdAsyncOpenContext",
+    "0x48b4da2f",
+    "sceAdAsyncConnectContext",
+    "0x853e785d",
+    "sceAdAsyncFlushReports",
+    "0xa8096b3e",
+    "sceAdAsyncCloseContext"
+   ],
+   "functions": [
+    {
+     "name": null,
+     "nid": "0x889864b4",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0x42fdbdfb",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceAdAsyncOpenContext",
+     "nid": "0x44946174",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0x48b4da2f",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceAdAsyncConnectContext",
+     "nid": "0x7a7a1ed3",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0x853e785d",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceAdAsyncFlushReports",
+     "nid": "0x9fd61d8e",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0xa8096b3e",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceAdAsyncCloseContext",
+     "nid": "0xcf1cbcf5",
+     "status": "absent",
+     "at": null
+    }
+   ]
+  },
+  "libad_core": {
+   "imported": 12,
+   "defined": 0,
+   "mentioned": 0,
+   "absent": 12,
+   "absent_names": [
+    "0x03c1a02f",
+    "0x260db83d",
+    "0x6ae5a677",
+    "0x9104f4be",
+    "0x9ae33d35",
+    "0xa642e894",
+    "sceAdGetAssetInfo",
+    "0xb00b4a26",
+    "0xb35ea795",
+    "sceAdCloseContext",
+    "sceAdGetSpaceInfo",
+    "sceAdGetConnectionInfo"
+   ],
+   "functions": [
+    {
+     "name": null,
+     "nid": "0x03c1a02f",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0x260db83d",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0x6ae5a677",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0x9104f4be",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0x9ae33d35",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0xa642e894",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceAdGetAssetInfo",
+     "nid": "0xac495eb8",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0xb00b4a26",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": null,
+     "nid": "0xb35ea795",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceAdCloseContext",
+     "nid": "0xd1ada7ae",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceAdGetSpaceInfo",
+     "nid": "0xdfa9d08d",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceAdGetConnectionInfo",
+     "nid": "0xe73c90ba",
+     "status": "absent",
+     "at": null
+    }
+   ]
+  },
+  "cellSysmodule": {
+   "imported": 3,
+   "defined": 3,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellSysmoduleUnloadModule",
+     "nid": "0x112a5ee9",
+     "status": "defined",
+     "at": "libs/system/cellSysmodule.c:104"
+    },
+    {
+     "name": "cellSysmoduleLoadModule",
+     "nid": "0x32267a31",
+     "status": "defined",
+     "at": "libs/system/cellSysmodule.c:87"
+    },
+    {
+     "name": "cellSysmoduleInitialize",
+     "nid": "0x63ff6ff9",
+     "status": "defined",
+     "at": "libs/system/cellSysmodule.c:84"
+    }
+   ]
+  },
+  "sys_io": {
+   "imported": 19,
+   "defined": 17,
+   "mentioned": 0,
+   "absent": 2,
+   "absent_names": [
+    "cellKbSetLEDStatus",
+    "cellKbRead"
+   ],
+   "functions": [
+    {
+     "name": "cellPadInit",
+     "nid": "0x1cf98800",
+     "status": "defined",
+     "at": "libs/input/cellPad.c:451"
+    },
+    {
+     "name": "cellKbClearBuf",
+     "nid": "0x2073b7f6",
+     "status": "defined",
+     "at": "libs/input/cellKb.c:270"
+    },
+    {
+     "name": "cellKbGetInfo",
+     "nid": "0x2f1774d5",
+     "status": "defined",
+     "at": "libs/input/cellKb.c:212"
+    },
+    {
+     "name": "cellMouseClearBuf",
+     "nid": "0x3ef66b95",
+     "status": "defined",
+     "at": "libs/input/cellMouse.c:325"
+    },
+    {
+     "name": "cellKbSetLEDStatus",
+     "nid": "0x3f72c56e",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellKbInit",
+     "nid": "0x433f6ec0",
+     "status": "defined",
+     "at": "libs/input/cellKb.c:123"
+    },
+    {
+     "name": "cellPadEnd",
+     "nid": "0x4d9b75d5",
+     "status": "defined",
+     "at": "libs/input/cellPad.c:478"
+    },
+    {
+     "name": "cellPadSetPortSetting",
+     "nid": "0x578e3c98",
+     "status": "defined",
+     "at": "libs/input/cellPad.c:994"
+    },
+    {
+     "name": "cellMouseGetInfo",
+     "nid": "0x5baf30fb",
+     "status": "defined",
+     "at": "libs/input/cellMouse.c:283"
+    },
+    {
+     "name": "cellMouseGetDataList",
+     "nid": "0x6bd131f0",
+     "status": "defined",
+     "at": "libs/input/cellMouse.c:210"
+    },
+    {
+     "name": "cellPadGetData",
+     "nid": "0x8b72cda1",
+     "status": "defined",
+     "at": "libs/input/cellPad.c:505"
+    },
+    {
+     "name": "cellKbSetCodeType",
+     "nid": "0xa5f85e4d",
+     "status": "defined",
+     "at": "libs/input/cellKb.c:253"
+    },
+    {
+     "name": "cellPadGetInfo2",
+     "nid": "0xa703a51d",
+     "status": "defined",
+     "at": "libs/input/cellPad.c:889"
+    },
+    {
+     "name": "cellKbEnd",
+     "nid": "0xbfce3285",
+     "status": "defined",
+     "at": "libs/input/cellKb.c:145"
+    },
+    {
+     "name": "cellMouseInit",
+     "nid": "0xc9030138",
+     "status": "defined",
+     "at": "libs/input/cellMouse.c:120"
+    },
+    {
+     "name": "cellKbSetReadMode",
+     "nid": "0xdeefdfa7",
+     "status": "defined",
+     "at": "libs/input/cellKb.c:236"
+    },
+    {
+     "name": "cellMouseEnd",
+     "nid": "0xe10183ce",
+     "status": "defined",
+     "at": "libs/input/cellMouse.c:144"
+    },
+    {
+     "name": "cellPadSetActDirect",
+     "nid": "0xf65544ee",
+     "status": "defined",
+     "at": "libs/input/cellPad.c:1064"
+    },
+    {
+     "name": "cellKbRead",
+     "nid": "0xff0a21b7",
+     "status": "absent",
+     "at": null
+    }
+   ]
+  },
+  "cellSysutil": {
+   "imported": 31,
+   "defined": 28,
+   "mentioned": 0,
+   "absent": 3,
+   "absent_names": [
+    "cellSaveDataListAutoSave",
+    "cellGameDataExitBroken",
+    "cellSaveDataFixedDelete"
+   ],
+   "functions": [
+    {
+     "name": "cellSysutilUnregisterCallback",
+     "nid": "0x02ff3c1b",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:185"
+    },
+    {
+     "name": "cellVideoOutConfigure",
+     "nid": "0x0bae8772",
+     "status": "defined",
+     "at": "libs/video/cellVideoOut.c:130"
+    },
+    {
+     "name": "cellSysutilCheckCallback",
+     "nid": "0x189a74da",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:205"
+    },
+    {
+     "name": "cellSaveDataListLoad2",
+     "nid": "0x1dfbfdd6",
+     "status": "defined",
+     "at": "libs/system/cellSaveData.c:1034"
+    },
+    {
+     "name": "cellSysCacheMount",
+     "nid": "0x1e7bff94",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:398"
+    },
+    {
+     "name": "cellSaveDataListAutoLoad",
+     "nid": "0x21425307",
+     "status": "defined",
+     "at": "libs/system/cellSaveData.c:1204"
+    },
+    {
+     "name": "cellSysutilEnableBgmPlayback",
+     "nid": "0x220894e3",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:334"
+    },
+    {
+     "name": "cellSaveDataFixedSave2",
+     "nid": "0x2aae9ef5",
+     "status": "defined",
+     "at": "libs/system/cellSaveData.c:1180"
+    },
+    {
+     "name": "cellSaveDataListSave2",
+     "nid": "0x2de0d663",
+     "status": "defined",
+     "at": "libs/system/cellSaveData.c:972"
+    },
+    {
+     "name": "cellSysutilGetSystemParamInt",
+     "nid": "0x40e895d3",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:264"
+    },
+    {
+     "name": "cellAudioOutConfigure",
+     "nid": "0x4692ab35",
+     "status": "defined",
+     "at": "libs/misc/cellAvconfExt.c:191"
+    },
+    {
+     "name": "cellSaveDataListAutoSave",
+     "nid": "0x4dd03a4e",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellMsgDialogAbort",
+     "nid": "0x62b0f803",
+     "status": "defined",
+     "at": "libs/system/cellMsgDialog.c:284"
+    },
+    {
+     "name": "cellSysCacheClear",
+     "nid": "0x744c1544",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:425"
+    },
+    {
+     "name": "cellVideoOutGetNumberOfDevice",
+     "nid": "0x75bbb672",
+     "status": "defined",
+     "at": "libs/video/cellVideoOut.c:235"
+    },
+    {
+     "name": "cellMsgDialogOpen2",
+     "nid": "0x7603d3db",
+     "status": "defined",
+     "at": "libs/system/cellMsgDialog.c:112"
+    },
+    {
+     "name": "cellAudioOutGetDeviceInfo",
+     "nid": "0x7663e368",
+     "status": "defined",
+     "at": "libs/misc/cellAvconfExt.c:71"
+    },
+    {
+     "name": "cellVideoOutGetState",
+     "nid": "0x887572d5",
+     "status": "defined",
+     "at": "libs/video/cellVideoOut.c:77"
+    },
+    {
+     "name": "cellSysutilGetSystemParamString",
+     "nid": "0x938013a0",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:301"
+    },
+    {
+     "name": "cellMsgDialogProgressBarInc",
+     "nid": "0x94862702",
+     "status": "defined",
+     "at": "libs/system/cellMsgDialog.c:331"
+    },
+    {
+     "name": "cellGameDataExitBroken",
+     "nid": "0x9949bf82",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellSysutilRegisterCallback",
+     "nid": "0x9d98afa0",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:156"
+    },
+    {
+     "name": "cellSysutilGetBgmPlaybackStatus",
+     "nid": "0xa11552f6",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:349"
+    },
+    {
+     "name": "cellDiscGameGetBootDiscInfo",
+     "nid": "0xb72bc4e6",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:451"
+    },
+    {
+     "name": "cellAudioOutGetSoundAvailability",
+     "nid": "0xc01b4e7c",
+     "status": "defined",
+     "at": "libs/misc/cellAvconfExt.c:33"
+    },
+    {
+     "name": "cellGameDataCheckCreate2",
+     "nid": "0xc9645c41",
+     "status": "defined",
+     "at": "libs/system/cellGame.c:522"
+    },
+    {
+     "name": "cellSaveDataFixedDelete",
+     "nid": "0xced17573",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellSysutilDisableBgmPlayback",
+     "nid": "0xcfdd8e87",
+     "status": "defined",
+     "at": "libs/system/cellSysutil.c:341"
+    },
+    {
+     "name": "cellVideoOutGetResolution",
+     "nid": "0xe558748d",
+     "status": "defined",
+     "at": "libs/video/cellVideoOut.c:110"
+    },
+    {
+     "name": "cellSaveDataDelete2",
+     "nid": "0xedadd797",
+     "status": "defined",
+     "at": "libs/system/cellSaveData.c:1287"
+    },
+    {
+     "name": "cellVideoOutGetConfiguration",
+     "nid": "0x15b0b0cd",
+     "status": "defined",
+     "at": "libs/video/cellVideoOut.c:161"
+    }
+   ]
+  },
+  "sys_fs": {
+   "imported": 15,
+   "defined": 15,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellFsFtruncate",
+     "nid": "0x0e2939e5",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:708"
+    },
+    {
+     "name": "cellFsRmdir",
+     "nid": "0x2796fdf3",
+     "status": "defined",
+     "at": "runtime/ppu/ppu_fs.cpp:771"
+    },
+    {
+     "name": "cellFsClose",
+     "nid": "0x2cb51f0d",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:496"
+    },
+    {
+     "name": "cellFsOpendir",
+     "nid": "0x3f61245c",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:790"
+    },
+    {
+     "name": "cellFsRead",
+     "nid": "0x4d5ff8e2",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:513"
+    },
+    {
+     "name": "cellFsReaddir",
+     "nid": "0x5c74903d",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:836"
+    },
+    {
+     "name": "cellFsOpen",
+     "nid": "0x718bf5f8",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:438"
+    },
+    {
+     "name": "cellFsStat",
+     "nid": "0x7de6dced",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:645"
+    },
+    {
+     "name": "cellFsUnlink",
+     "nid": "0x7f4677a8",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:976"
+    },
+    {
+     "name": "cellFsLseek",
+     "nid": "0xa397d042",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:577"
+    },
+    {
+     "name": "cellFsMkdir",
+     "nid": "0xba901fe6",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:922"
+    },
+    {
+     "name": "cellFsWrite",
+     "nid": "0xecdcf2ab",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:555"
+    },
+    {
+     "name": "cellFsFstat",
+     "nid": "0xef3efa34",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:605"
+    },
+    {
+     "name": "cellFsRename",
+     "nid": "0xf12eecc8",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:948"
+    },
+    {
+     "name": "cellFsClosedir",
+     "nid": "0xff42dcc3",
+     "status": "defined",
+     "at": "libs/filesystem/cellFs.c:898"
+    }
+   ]
+  },
+  "sceNpTrophy": {
+   "imported": 8,
+   "defined": 8,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "sceNpTrophyRegisterContext",
+     "nid": "0x1197b52c",
+     "status": "defined",
+     "at": "libs/network/sceNpTrophy.c:295"
+    },
+    {
+     "name": "sceNpTrophyCreateHandle",
+     "nid": "0x1c25470d",
+     "status": "defined",
+     "at": "libs/network/sceNpTrophy.c:261"
+    },
+    {
+     "name": "sceNpTrophyDestroyContext",
+     "nid": "0x3741ecc7",
+     "status": "defined",
+     "at": "libs/network/sceNpTrophy.c:244"
+    },
+    {
+     "name": "sceNpTrophyInit",
+     "nid": "0x39567781",
+     "status": "defined",
+     "at": "libs/network/sceNpTrophy.c:180"
+    },
+    {
+     "name": "sceNpTrophyDestroyHandle",
+     "nid": "0x623cd2dc",
+     "status": "defined",
+     "at": "libs/network/sceNpTrophy.c:281"
+    },
+    {
+     "name": "sceNpTrophyUnlockTrophy",
+     "nid": "0x8ceedd21",
+     "status": "defined",
+     "at": "libs/network/sceNpTrophy.c:466"
+    },
+    {
+     "name": "sceNpTrophyTerm",
+     "nid": "0xa7fabf4d",
+     "status": "defined",
+     "at": "libs/network/sceNpTrophy.c:195"
+    },
+    {
+     "name": "sceNpTrophyCreateContext",
+     "nid": "0xe3bf9a28",
+     "status": "defined",
+     "at": "libs/network/sceNpTrophy.c:214"
+    }
+   ]
+  },
+  "cellJpgDec": {
+   "imported": 7,
+   "defined": 7,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellJpgDecReadHeader",
+     "nid": "0x6d9ebccf",
+     "status": "defined",
+     "at": "libs/codec/cellJpgDec.c:292"
+    },
+    {
+     "name": "cellJpgDecClose",
+     "nid": "0x9338a07a",
+     "status": "defined",
+     "at": "libs/codec/cellJpgDec.c:506"
+    },
+    {
+     "name": "cellJpgDecOpen",
+     "nid": "0x976ca5c2",
+     "status": "defined",
+     "at": "libs/codec/cellJpgDec.c:253"
+    },
+    {
+     "name": "cellJpgDecCreate",
+     "nid": "0xa7978f59",
+     "status": "defined",
+     "at": "libs/codec/cellJpgDec.c:210"
+    },
+    {
+     "name": "cellJpgDecDecodeData",
+     "nid": "0xaf8bb012",
+     "status": "defined",
+     "at": "libs/codec/cellJpgDec.c:430"
+    },
+    {
+     "name": "cellJpgDecDestroy",
+     "nid": "0xd8ea91f8",
+     "status": "defined",
+     "at": "libs/codec/cellJpgDec.c:235"
+    },
+    {
+     "name": "cellJpgDecSetParameter",
+     "nid": "0xe08f3910",
+     "status": "defined",
+     "at": "libs/codec/cellJpgDec.c:372"
+    }
+   ]
+  },
+  "cellCamera": {
+   "imported": 13,
+   "defined": 13,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellCameraStop",
+     "nid": "0x02f5ced0",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:133"
+    },
+    {
+     "name": "cellCameraClose",
+     "nid": "0x379c5dd6",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:117"
+    },
+    {
+     "name": "cellCameraRead",
+     "nid": "0x3845d39b",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:168"
+    },
+    {
+     "name": "cellCameraRemoveNotifyEventQueue2",
+     "nid": "0x44673f07",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:252"
+    },
+    {
+     "name": "cellCameraStart",
+     "nid": "0x456dc4aa",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:126"
+    },
+    {
+     "name": "cellCameraGetAttribute",
+     "nid": "0x532b8aaa",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:219"
+    },
+    {
+     "name": "cellCameraGetType",
+     "nid": "0x58bc5870",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:202"
+    },
+    {
+     "name": "cellCameraEnd",
+     "nid": "0x5ad46570",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:76"
+    },
+    {
+     "name": "cellCameraOpenEx",
+     "nid": "0x5d25f866",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:82"
+    },
+    {
+     "name": "cellCameraReset",
+     "nid": "0x81f83db9",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:124"
+    },
+    {
+     "name": "cellCameraSetAttribute",
+     "nid": "0x8cd56eee",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:213"
+    },
+    {
+     "name": "cellCameraSetNotifyEventQueue2",
+     "nid": "0xa7fd2f5b",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:245"
+    },
+    {
+     "name": "cellCameraInit",
+     "nid": "0xbf47c5dd",
+     "status": "defined",
+     "at": "libs/hardware/cellCamera.c:68"
+    }
+   ]
+  },
+  "cellRtc": {
+   "imported": 7,
+   "defined": 7,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellRtcGetCurrentClockLocalTime",
+     "nid": "0x2cce9cf5",
+     "status": "defined",
+     "at": "libs/system/cellRtc.c:201"
+    },
+    {
+     "name": "cellRtcGetCurrentClock",
+     "nid": "0x32c941cf",
+     "status": "defined",
+     "at": "libs/system/cellRtc.c:179"
+    },
+    {
+     "name": "cellRtcSetTick",
+     "nid": "0x99b13034",
+     "status": "defined",
+     "at": "libs/system/cellRtc.c:495"
+    },
+    {
+     "name": "cellRtcSetTime_t",
+     "nid": "0xbb543189",
+     "status": "defined",
+     "at": "libs/system/cellRtc.c:258"
+    },
+    {
+     "name": "cellRtcConvertUtcToLocalTime",
+     "nid": "0xc48d5002",
+     "status": "defined",
+     "at": "libs/system/cellRtc.c:377"
+    },
+    {
+     "name": "cellRtcGetTick",
+     "nid": "0xc7bdb7eb",
+     "status": "defined",
+     "at": "libs/system/cellRtc.c:520"
+    },
+    {
+     "name": "cellRtcGetTime_t",
+     "nid": "0xcb90c761",
+     "status": "defined",
+     "at": "libs/system/cellRtc.c:245"
+    }
+   ]
+  },
+  "libvdec": {
+   "imported": 8,
+   "defined": 8,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellVdecClose",
+     "nid": "0x16698e83",
+     "status": "defined",
+     "at": "libs/codec/cellVdec.c:186"
+    },
+    {
+     "name": "cellVdecGetPicItem",
+     "nid": "0x17c702b9",
+     "status": "defined",
+     "at": "libs/codec/cellVdec.c:370"
+    },
+    {
+     "name": "cellVdecDecodeAu",
+     "nid": "0x2bf4ddd2",
+     "status": "defined",
+     "at": "libs/codec/cellVdec.c:240"
+    },
+    {
+     "name": "cellVdecGetPicture",
+     "nid": "0x807c861a",
+     "status": "defined",
+     "at": "libs/codec/cellVdec.c:414"
+    },
+    {
+     "name": "cellVdecEndSeq",
+     "nid": "0x824433f0",
+     "status": "defined",
+     "at": "libs/codec/cellVdec.c:218"
+    },
+    {
+     "name": "cellVdecOpen",
+     "nid": "0xb6bbcd5d",
+     "status": "defined",
+     "at": "libs/codec/cellVdec.c:156"
+    },
+    {
+     "name": "cellVdecStartSeq",
+     "nid": "0xc757c2aa",
+     "status": "defined",
+     "at": "libs/codec/cellVdec.c:202"
+    },
+    {
+     "name": "cellVdecQueryAttr",
+     "nid": "0xff6f6ebe",
+     "status": "defined",
+     "at": "libs/codec/cellVdec.c:139"
+    }
+   ]
+  },
+  "cellGcmSys": {
+   "imported": 27,
+   "defined": 24,
+   "mentioned": 1,
+   "absent": 2,
+   "absent_names": [
+    "cellGcmGetLastSecondVTime",
+    "_cellGcmFunc15"
+   ],
+   "functions": [
+    {
+     "name": "cellGcmGetTiledPitchSize",
+     "nid": "0x055bd74d",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:3126"
+    },
+    {
+     "name": "cellGcmSetPrepareFlip",
+     "nid": "0x0b4b62d5",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2477"
+    },
+    {
+     "name": "_cellGcmInitBody",
+     "nid": "0x15bae46b",
+     "status": "mentioned",
+     "at": "libs/video/cellGcmSys.c:514"
+    },
+    {
+     "name": "_cellGcmSetFlipCommand",
+     "nid": "0x21397818",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:3213"
+    },
+    {
+     "name": "cellGcmAddressToOffset",
+     "nid": "0x21ac3697",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2595"
+    },
+    {
+     "name": "cellGcmGetLastSecondVTime",
+     "nid": "0x23ae55a3",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "_cellGcmFunc15",
+     "nid": "0x3a33c1fd",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellGcmSetFlipMode",
+     "nid": "0x4ae8d215",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:603"
+    },
+    {
+     "name": "cellGcmSetSecondVFrequency",
+     "nid": "0x4d7ce993",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:3468"
+    },
+    {
+     "name": "cellGcmGetLastFlipTime",
+     "nid": "0x63387071",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2559"
+    },
+    {
+     "name": "cellGcmGetFlipStatus",
+     "nid": "0x72a577ce",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:639"
+    },
+    {
+     "name": "cellGcmGetReport",
+     "nid": "0x99d397ac",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2991"
+    },
+    {
+     "name": "cellGcmMapMainMemory",
+     "nid": "0xa114ec67",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2727"
+    },
+    {
+     "name": "cellGcmSetFlipHandler",
+     "nid": "0xa41ef7e8",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2518"
+    },
+    {
+     "name": "cellGcmSetDisplayBuffer",
+     "nid": "0xa53d12ae",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2277"
+    },
+    {
+     "name": "cellGcmGetControlRegister",
+     "nid": "0xa547adde",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:583"
+    },
+    {
+     "name": "cellGcmSetVBlankHandler",
+     "nid": "0xa91b0402",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2532"
+    },
+    {
+     "name": "cellGcmSetFlipImmediate",
+     "nid": "0xacee8542",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:3441"
+    },
+    {
+     "name": "cellGcmResetFlipStatus",
+     "nid": "0xb2e761d4",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:630"
+    },
+    {
+     "name": "cellGcmSetDefaultCommandBuffer",
+     "nid": "0xbc982946",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:3382"
+    },
+    {
+     "name": "cellGcmSetInvalidateTile",
+     "nid": "0xbd6d60d9",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:3497"
+    },
+    {
+     "name": "cellGcmSetTile",
+     "nid": "0xd0b1d189",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:3018"
+    },
+    {
+     "name": "cellGcmSetZcull",
+     "nid": "0xd34a420d",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:3043"
+    },
+    {
+     "name": "_cellGcmSetFlipCommandWithWaitLabel",
+     "nid": "0xd8f88e1a",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:3221"
+    },
+    {
+     "name": "cellGcmSetSecondVHandler",
+     "nid": "0xdc494430",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2542"
+    },
+    {
+     "name": "cellGcmGetConfiguration",
+     "nid": "0xe315a0b2",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:560"
+    },
+    {
+     "name": "cellGcmGetLabelAddress",
+     "nid": "0xf80196c1",
+     "status": "defined",
+     "at": "libs/video/cellGcmSys.c:2969"
+    }
+   ]
+  },
+  "sys_net": {
+   "imported": 29,
+   "defined": 2,
+   "mentioned": 24,
+   "absent": 3,
+   "absent_names": [
+    "gethostbyaddr",
+    "sys_net_get_sockinfo",
+    "sys_net_abort_socket"
+   ],
+   "functions": [
+    {
+     "name": "socketpoll",
+     "nid": "0x051ee3ee",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:1072"
+    },
+    {
+     "name": "sys_net_initialize_network_ex",
+     "nid": "0x139a9e9b",
+     "status": "defined",
+     "at": "libs/network/sysNet.c:261"
+    },
+    {
+     "name": "getsockname",
+     "nid": "0x13efe7f5",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:793"
+    },
+    {
+     "name": "recvfrom",
+     "nid": "0x1f953b9f",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:655"
+    },
+    {
+     "name": "listen",
+     "nid": "0x28e208bb",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:439"
+    },
+    {
+     "name": "socketselect",
+     "nid": "0x3f09e20a",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:926"
+    },
+    {
+     "name": "getsockopt",
+     "nid": "0x5a045bd1",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:758"
+    },
+    {
+     "name": "_sys_net_errno_loc",
+     "nid": "0x6005cde1",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.h:28"
+    },
+    {
+     "name": "connect",
+     "nid": "0x64f66d35",
+     "status": "mentioned",
+     "at": "libs/network/sceNpCommerce2.c:5"
+    },
+    {
+     "name": "socketclose",
+     "nid": "0x6db6e8cd",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:1065"
+    },
+    {
+     "name": "gethostbyname",
+     "nid": "0x71f4c717",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:996"
+    },
+    {
+     "name": "inet_ntoa",
+     "nid": "0x858a930b",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.h:188"
+    },
+    {
+     "name": "setsockopt",
+     "nid": "0x88f03575",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:411"
+    },
+    {
+     "name": "sys_net_abort_resolver",
+     "nid": "0x8ccf05ed",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:1082"
+    },
+    {
+     "name": "sendto",
+     "nid": "0x9647570b",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:370"
+    },
+    {
+     "name": "socket",
+     "nid": "0x9c056962",
+     "status": "mentioned",
+     "at": "libs/network/host_socket_send.h:3"
+    },
+    {
+     "name": "shutdown",
+     "nid": "0xa50777c6",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.h:139"
+    },
+    {
+     "name": "inet_aton",
+     "nid": "0xa9a079e0",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:1073"
+    },
+    {
+     "name": "bind",
+     "nid": "0xb0a59804",
+     "status": "mentioned",
+     "at": "libs/network/np_psnr.h:9"
+    },
+    {
+     "name": "sys_net_finalize_network",
+     "nid": "0xb68d5625",
+     "status": "defined",
+     "at": "libs/network/sysNet.c:268"
+    },
+    {
+     "name": "accept",
+     "nid": "0xc94f6939",
+     "status": "mentioned",
+     "at": "libs/codec/stb_image.h:5565"
+    },
+    {
+     "name": "send",
+     "nid": "0xdc751b40",
+     "status": "mentioned",
+     "at": "libs/network/host_socket_send.h:1"
+    },
+    {
+     "name": "gethostbyaddr",
+     "nid": "0xf7ac8941",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "getpeername",
+     "nid": "0xf9ec2db6",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:804"
+    },
+    {
+     "name": "recv",
+     "nid": "0xfba04f37",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:101"
+    },
+    {
+     "name": "sys_net_free_thread_context",
+     "nid": "0xfdb8f926",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.c:1081"
+    },
+    {
+     "name": "sys_net_get_sockinfo",
+     "nid": "0x3b27c780",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sys_net_abort_socket",
+     "nid": "0x8d1b77fb",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "inet_addr",
+     "nid": "0xdabbc2c0",
+     "status": "mentioned",
+     "at": "libs/network/sysNet.h:171"
+    }
+   ]
+  },
+  "cellNetCtl": {
+   "imported": 8,
+   "defined": 8,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellNetCtlNetStartDialogLoadAsync",
+     "nid": "0x04459230",
+     "status": "defined",
+     "at": "libs/network/cellNetCtl.c:347"
+    },
+    {
+     "name": "cellNetCtlAddHandler",
+     "nid": "0x0ce13c6b",
+     "status": "defined",
+     "at": "libs/network/cellNetCtl.c:286"
+    },
+    {
+     "name": "cellNetCtlNetStartDialogUnloadAsync",
+     "nid": "0x0f1f13d3",
+     "status": "defined",
+     "at": "libs/network/cellNetCtl.c:362"
+    },
+    {
+     "name": "cellNetCtlTerm",
+     "nid": "0x105ee2cb",
+     "status": "defined",
+     "at": "libs/network/cellNetCtl.c:141"
+    },
+    {
+     "name": "cellNetCtlGetInfo",
+     "nid": "0x1e585b5d",
+     "status": "defined",
+     "at": "libs/network/cellNetCtl.c:174"
+    },
+    {
+     "name": "cellNetCtlGetState",
+     "nid": "0x8b3eba69",
+     "status": "defined",
+     "at": "libs/network/cellNetCtl.c:149"
+    },
+    {
+     "name": "cellNetCtlDelHandler",
+     "nid": "0x901815c3",
+     "status": "defined",
+     "at": "libs/network/cellNetCtl.c:308"
+    },
+    {
+     "name": "cellNetCtlInit",
+     "nid": "0xbd5a59fc",
+     "status": "defined",
+     "at": "libs/network/cellNetCtl.c:129"
+    }
+   ]
+  },
+  "cellAudio": {
+   "imported": 9,
+   "defined": 9,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellAudioInit",
+     "nid": "0x0b168f92",
+     "status": "defined",
+     "at": "libs/audio/cellAudio.c:677"
+    },
+    {
+     "name": "cellAudioSetNotifyEventQueue",
+     "nid": "0x377e0cd9",
+     "status": "defined",
+     "at": "libs/audio/cellAudio.c:994"
+    },
+    {
+     "name": "cellAudioPortClose",
+     "nid": "0x4129fe2d",
+     "status": "defined",
+     "at": "libs/audio/cellAudio.c:822"
+    },
+    {
+     "name": "cellAudioPortStop",
+     "nid": "0x5b1e2c73",
+     "status": "defined",
+     "at": "libs/audio/cellAudio.c:871"
+    },
+    {
+     "name": "cellAudioGetPortConfig",
+     "nid": "0x74a66af0",
+     "status": "defined",
+     "at": "libs/audio/cellAudio.c:1039"
+    },
+    {
+     "name": "cellAudioPortStart",
+     "nid": "0x89be28f2",
+     "status": "defined",
+     "at": "libs/audio/cellAudio.c:851"
+    },
+    {
+     "name": "cellAudioQuit",
+     "nid": "0xca5ac370",
+     "status": "defined",
+     "at": "libs/audio/cellAudio.c:719"
+    },
+    {
+     "name": "cellAudioPortOpen",
+     "nid": "0xcd7bc431",
+     "status": "defined",
+     "at": "libs/audio/cellAudio.c:742"
+    },
+    {
+     "name": "cellAudioRemoveNotifyEventQueue",
+     "nid": "0xff3626fd",
+     "status": "defined",
+     "at": "libs/audio/cellAudio.c:1017"
+    }
+   ]
+  },
+  "cellAdec": {
+   "imported": 8,
+   "defined": 8,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellAdecDecodeAu",
+     "nid": "0x1529e506",
+     "status": "defined",
+     "at": "libs/codec/cellAdec.c:227"
+    },
+    {
+     "name": "cellAdecStartSeq",
+     "nid": "0x487b613e",
+     "status": "defined",
+     "at": "libs/codec/cellAdec.c:186"
+    },
+    {
+     "name": "cellAdecQueryAttr",
+     "nid": "0x7e4a4a49",
+     "status": "defined",
+     "at": "libs/codec/cellAdec.c:117"
+    },
+    {
+     "name": "cellAdecClose",
+     "nid": "0x847d2380",
+     "status": "defined",
+     "at": "libs/codec/cellAdec.c:175"
+    },
+    {
+     "name": "cellAdecGetPcm",
+     "nid": "0x97ff2af1",
+     "status": "defined",
+     "at": "libs/codec/cellAdec.c:286"
+    },
+    {
+     "name": "cellAdecGetPcmItem",
+     "nid": "0xbd75f78b",
+     "status": "defined",
+     "at": "libs/codec/cellAdec.c:306"
+    },
+    {
+     "name": "cellAdecOpen",
+     "nid": "0xd00a6988",
+     "status": "defined",
+     "at": "libs/codec/cellAdec.c:138"
+    },
+    {
+     "name": "cellAdecEndSeq",
+     "nid": "0xe2ea549b",
+     "status": "defined",
+     "at": "libs/codec/cellAdec.c:198"
+    }
+   ]
+  },
+  "cellCelpEnc": {
+   "imported": 8,
+   "defined": 0,
+   "mentioned": 0,
+   "absent": 8,
+   "absent_names": [
+    "cellCelpEncClose",
+    "cellCelpEncGetAu",
+    "cellCelpEncStart",
+    "cellCelpEncQueryAttr",
+    "cellCelpEncOpen",
+    "cellCelpEncEncodeFrame",
+    "cellCelpEncWaitForOutput",
+    "cellCelpEncEnd"
+   ],
+   "functions": [
+    {
+     "name": "cellCelpEncClose",
+     "nid": "0x15ec0cca",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellCelpEncGetAu",
+     "nid": "0x3773692f",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellCelpEncStart",
+     "nid": "0x55dc23de",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellCelpEncQueryAttr",
+     "nid": "0x6b148570",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellCelpEncOpen",
+     "nid": "0x77b3b29a",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellCelpEncEncodeFrame",
+     "nid": "0x81fe030c",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellCelpEncWaitForOutput",
+     "nid": "0x9b244272",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellCelpEncEnd",
+     "nid": "0xf2b85dff",
+     "status": "absent",
+     "at": null
+    }
+   ]
+  },
+  "cellGame": {
+   "imported": 4,
+   "defined": 4,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellGameGetParamString",
+     "nid": "0x3a5d726a",
+     "status": "defined",
+     "at": "libs/system/cellGame.c:653"
+    },
+    {
+     "name": "cellGameContentPermit",
+     "nid": "0x70acec67",
+     "status": "defined",
+     "at": "libs/system/cellGame.c:370"
+    },
+    {
+     "name": "cellGameDataCheck",
+     "nid": "0xdb9819f3",
+     "status": "defined",
+     "at": "libs/system/cellGame.c:415"
+    },
+    {
+     "name": "cellGameBootCheck",
+     "nid": "0xf52639ea",
+     "status": "defined",
+     "at": "libs/system/cellGame.c:316"
+    }
+   ]
+  },
+  "sceNpCommerce2": {
+   "imported": 25,
+   "defined": 14,
+   "mentioned": 0,
+   "absent": 11,
+   "absent_names": [
+    "sceNpCommerce2CreateSessionAbort",
+    "sceNpCommerce2GetCategoryContentsCreateReq",
+    "sceNpCommerce2GetContentInfo",
+    "sceNpCommerce2DestroyGetCategoryContentsResult",
+    "sceNpCommerce2GetProductInfoCreateReq",
+    "sceNpCommerce2InitGetCategoryContentsResult",
+    "sceNpCommerce2GetGameSkuInfoFromGameProductInfo",
+    "sceNpCommerce2GetGameProductInfoFromContentInfo",
+    "sceNpCommerce2GetGameProductInfo",
+    "sceNpCommerce2DestroyGetProductInfoResult",
+    "sceNpCommerce2InitGetProductInfoResult"
+   ],
+   "functions": [
+    {
+     "name": "sceNpCommerce2DoCheckoutStartAsync",
+     "nid": "0x104551a6",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce.c:39"
+    },
+    {
+     "name": "sceNpCommerce2DestroyReq",
+     "nid": "0x2a910f05",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:130"
+    },
+    {
+     "name": "sceNpCommerce2Init",
+     "nid": "0x3539d233",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:18"
+    },
+    {
+     "name": "sceNpCommerce2GetCategoryContentsStart",
+     "nid": "0x371a2edd",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:79"
+    },
+    {
+     "name": "sceNpCommerce2Term",
+     "nid": "0x4d4a094c",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:26"
+    },
+    {
+     "name": "sceNpCommerce2CreateSessionAbort",
+     "nid": "0x62023e98",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2DestroyCtx",
+     "nid": "0x6f67ea80",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:52"
+    },
+    {
+     "name": "sceNpCommerce2GetCategoryContentsCreateReq",
+     "nid": "0x7370d8d0",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2GetProductInfoStart",
+     "nid": "0x8f46325b",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:102"
+    },
+    {
+     "name": "sceNpCommerce2CreateSessionFinish",
+     "nid": "0x91f8843d",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:65"
+    },
+    {
+     "name": "sceNpCommerce2GetContentInfo",
+     "nid": "0x972ab46c",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2DestroyGetCategoryContentsResult",
+     "nid": "0x9d9cb96b",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2GetProductInfoCreateReq",
+     "nid": "0xa975ebb4",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2GetCategoryInfo",
+     "nid": "0xbd49eab2",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce.c:19"
+    },
+    {
+     "name": "sceNpCommerce2GetProductInfoGetResult",
+     "nid": "0xbf5f58ea",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:115"
+    },
+    {
+     "name": "sceNpCommerce2GetCategoryContentsGetResult",
+     "nid": "0xca0ea996",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:93"
+    },
+    {
+     "name": "sceNpCommerce2CreateSessionStart",
+     "nid": "0xcc18cd2c",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:58"
+    },
+    {
+     "name": "sceNpCommerce2DoCheckoutFinishAsync",
+     "nid": "0xd43a130e",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:136"
+    },
+    {
+     "name": "sceNpCommerce2InitGetCategoryContentsResult",
+     "nid": "0xd8a473a3",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2CreateCtx",
+     "nid": "0xd9fdcec2",
+     "status": "defined",
+     "at": "libs/network/sceNpCommerce2.c:35"
+    },
+    {
+     "name": "sceNpCommerce2GetGameSkuInfoFromGameProductInfo",
+     "nid": "0xdb19194c",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2GetGameProductInfoFromContentInfo",
+     "nid": "0xe51a4944",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2GetGameProductInfo",
+     "nid": "0xef645654",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2DestroyGetProductInfoResult",
+     "nid": "0xef8eafcd",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sceNpCommerce2InitGetProductInfoResult",
+     "nid": "0xf798f5e3",
+     "status": "absent",
+     "at": null
+    }
+   ]
+  },
+  "cellHttp": {
+   "imported": 6,
+   "defined": 4,
+   "mentioned": 0,
+   "absent": 2,
+   "absent_names": [
+    "cellHttpEndCookie",
+    "cellHttpInitCookie"
+   ],
+   "functions": [
+    {
+     "name": "cellHttpInit",
+     "nid": "0x250c386c",
+     "status": "defined",
+     "at": "libs/network/cellHttp.c:271"
+    },
+    {
+     "name": "cellHttpsInit",
+     "nid": "0x522180bc",
+     "status": "defined",
+     "at": "libs/network/cellHttps.c:38"
+    },
+    {
+     "name": "cellHttpEndCookie",
+     "nid": "0x61b2bade",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellHttpInitCookie",
+     "nid": "0x9638f766",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellHttpEnd",
+     "nid": "0xd276ff1f",
+     "status": "defined",
+     "at": "libs/network/cellHttp.c:301"
+    },
+    {
+     "name": "cellHttpsEnd",
+     "nid": "0xe6d4202f",
+     "status": "defined",
+     "at": "libs/network/cellHttps.c:50"
+    }
+   ]
+  },
+  "cellSsl": {
+   "imported": 3,
+   "defined": 3,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellSslEnd",
+     "nid": "0x1650aea4",
+     "status": "defined",
+     "at": "libs/network/cellSsl.c:46"
+    },
+    {
+     "name": "cellSslCertificateLoader",
+     "nid": "0x571afaca",
+     "status": "defined",
+     "at": "libs/network/cellSsl.c:57"
+    },
+    {
+     "name": "cellSslInit",
+     "nid": "0xfb02c9d2",
+     "status": "defined",
+     "at": "libs/network/cellSsl.c:33"
+    }
+   ]
+  },
+  "cellMic": {
+   "imported": 9,
+   "defined": 9,
+   "mentioned": 0,
+   "absent": 0,
+   "absent_names": [],
+   "functions": [
+    {
+     "name": "cellMicRead",
+     "nid": "0x07e1b12c",
+     "status": "defined",
+     "at": "libs/audio/cellMic.c:59"
+    },
+    {
+     "name": "cellMicIsAttached",
+     "nid": "0x1b42101b",
+     "status": "defined",
+     "at": "libs/audio/cellMic.c:73"
+    },
+    {
+     "name": "cellMicSetSignalAttr",
+     "nid": "0x323deb41",
+     "status": "defined",
+     "at": "libs/audio/cellMic.c:108"
+    },
+    {
+     "name": "cellMicInit",
+     "nid": "0x8325e02d",
+     "status": "defined",
+     "at": "libs/audio/cellMic.c:18"
+    },
+    {
+     "name": "cellMicClose",
+     "nid": "0x8d229f8e",
+     "status": "defined",
+     "at": "libs/audio/cellMic.c:41"
+    },
+    {
+     "name": "cellMicGetSignalState",
+     "nid": "0xb30780eb",
+     "status": "defined",
+     "at": "libs/audio/cellMic.c:100"
+    },
+    {
+     "name": "cellMicEnd",
+     "nid": "0xc6328caa",
+     "status": "defined",
+     "at": "libs/audio/cellMic.c:27"
+    },
+    {
+     "name": "cellMicOpen",
+     "nid": "0xdd1b59f0",
+     "status": "defined",
+     "at": "libs/audio/cellMic.c:34"
+    },
+    {
+     "name": "cellMicStart",
+     "nid": "0xdd724314",
+     "status": "defined",
+     "at": "libs/audio/cellMic.c:47"
+    }
+   ]
+  },
+  "sysPrxForUser": {
+   "imported": 95,
+   "defined": 75,
+   "mentioned": 9,
+   "absent": 11,
+   "absent_names": [
+    "sys_prx_register_library",
+    "sys_raw_spu_load",
+    "_sys_vsnprintf",
+    "_sys_spu_printf_detach_group",
+    "0x9fb6228e",
+    "_sys_spu_printf_attach_group",
+    "_sys_vprintf",
+    "_sys_memmove",
+    "sys_ppu_thread_register_atexit",
+    "_sys_strchr",
+    "sys_ppu_thread_unregister_atexit"
+   ],
+   "functions": [
+    {
+     "name": "sys_lwmutex_lock",
+     "nid": "0x1573dc3f",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:523"
+    },
+    {
+     "name": "sys_lwmutex_unlock",
+     "nid": "0x1bc200f4",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:592"
+    },
+    {
+     "name": "sys_ppu_thread_create",
+     "nid": "0x24a1ea07",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:326"
+    },
+    {
+     "name": "_sys_process_atexitspawn",
+     "nid": "0x2c847572",
+     "status": "mentioned",
+     "at": "runtime/ppu/ppu_sysprx.cpp:886"
+    },
+    {
+     "name": "sys_lwmutex_create",
+     "nid": "0x2f85c0ef",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:496"
+    },
+    {
+     "name": "sys_ppu_thread_get_id",
+     "nid": "0x350d454e",
+     "status": "defined",
+     "at": "runtime/ppu/ppu_sysprx.cpp:374"
+    },
+    {
+     "name": "sys_mmapper_free_memory",
+     "nid": "0x409ad939",
+     "status": "mentioned",
+     "at": "runtime/ppu/ppu_sysprx.cpp:918"
+    },
+    {
+     "name": "sys_prx_register_library",
+     "nid": "0x42b23552",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sys_mmapper_unmap_memory",
+     "nid": "0x4643ba6e",
+     "status": "mentioned",
+     "at": "runtime/ppu/ppu_sysprx.cpp:917"
+    },
+    {
+     "name": "sys_initialize_tls",
+     "nid": "0x744680a2",
+     "status": "defined",
+     "at": "runtime/ppu/ppu_sysprx.cpp:39"
+    },
+    {
+     "name": "sys_time_get_system_time",
+     "nid": "0x8461e528",
+     "status": "defined",
+     "at": "runtime/ppu/ppu_sysprx.cpp:65"
+    },
+    {
+     "name": "sys_raw_spu_load",
+     "nid": "0x893305fa",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "_sys_process_at_Exitspawn",
+     "nid": "0x96328741",
+     "status": "mentioned",
+     "at": "runtime/ppu/ppu_sysprx.cpp:887"
+    },
+    {
+     "name": "sys_prx_exitspawn_with_level",
+     "nid": "0xa2c7ba64",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:1037"
+    },
+    {
+     "name": "sys_ppu_thread_exit",
+     "nid": "0xaff080a4",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:512"
+    },
+    {
+     "name": "sys_mmapper_allocate_memory",
+     "nid": "0xb257540b",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_memory.c:413"
+    },
+    {
+     "name": "sys_lwmutex_destroy",
+     "nid": "0xc3476d0c",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:613"
+    },
+    {
+     "name": "sys_mmapper_map_memory",
+     "nid": "0xdc578057",
+     "status": "mentioned",
+     "at": "runtime/ppu/ppu_sysprx.cpp:916"
+    },
+    {
+     "name": "sys_spu_image_close",
+     "nid": "0xe0da8efd",
+     "status": "mentioned",
+     "at": "runtime/spu/spu_raw.c:687"
+    },
+    {
+     "name": "sys_process_exit",
+     "nid": "0xe6f2c1e7",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:170"
+    },
+    {
+     "name": "sys_spu_image_import",
+     "nid": "0xebe5f72f",
+     "status": "mentioned",
+     "at": "runtime/syscalls/lv2_register.c:33"
+    },
+    {
+     "name": "_sys_strncmp",
+     "nid": "0x04e83d2c",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:372"
+    },
+    {
+     "name": "sys_lwmutex_lock",
+     "nid": "0x1573dc3f",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:523"
+    },
+    {
+     "name": "sys_lwmutex_unlock",
+     "nid": "0x1bc200f4",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:592"
+    },
+    {
+     "name": "sys_ppu_thread_create",
+     "nid": "0x24a1ea07",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:326"
+    },
+    {
+     "name": "sys_lwmutex_create",
+     "nid": "0x2f85c0ef",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:496"
+    },
+    {
+     "name": "_sys_memset",
+     "nid": "0x68b9b011",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:379"
+    },
+    {
+     "name": "_sys_printf",
+     "nid": "0x9f04f7af",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:276"
+    },
+    {
+     "name": "sys_ppu_thread_exit",
+     "nid": "0xaff080a4",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:512"
+    },
+    {
+     "name": "sys_lwmutex_destroy",
+     "nid": "0xc3476d0c",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:613"
+    },
+    {
+     "name": "sys_process_get_paramsfo",
+     "nid": "0xe75c40f2",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:1149"
+    },
+    {
+     "name": "_sys_strncmp",
+     "nid": "0x04e83d2c",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:372"
+    },
+    {
+     "name": "_sys_strcat",
+     "nid": "0x052d29a6",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:341"
+    },
+    {
+     "name": "_sys_vsnprintf",
+     "nid": "0x0618936b",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "_sys_snprintf",
+     "nid": "0x06574237",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:318"
+    },
+    {
+     "name": "sys_lwmutex_lock",
+     "nid": "0x1573dc3f",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:523"
+    },
+    {
+     "name": "sys_lwmutex_unlock",
+     "nid": "0x1bc200f4",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:592"
+    },
+    {
+     "name": "sys_lwcond_destroy",
+     "nid": "0x1c9a942c",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:779"
+    },
+    {
+     "name": "sys_ppu_thread_create",
+     "nid": "0x24a1ea07",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:326"
+    },
+    {
+     "name": "sys_lwcond_wait",
+     "nid": "0x2a6d9d51",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:730"
+    },
+    {
+     "name": "_sys_strlen",
+     "nid": "0x2d36462b",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:326"
+    },
+    {
+     "name": "sys_lwmutex_create",
+     "nid": "0x2f85c0ef",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:496"
+    },
+    {
+     "name": "_sys_spu_printf_detach_group",
+     "nid": "0x5fdfb2fe",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "_sys_memset",
+     "nid": "0x68b9b011",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:379"
+    },
+    {
+     "name": "_sys_memcpy",
+     "nid": "0x6bf66ea7",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:386"
+    },
+    {
+     "name": "_sys_strncat",
+     "nid": "0x996f7cf8",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:365"
+    },
+    {
+     "name": "_sys_strcpy",
+     "nid": "0x99c88692",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:358"
+    },
+    {
+     "name": "_sys_printf",
+     "nid": "0x9f04f7af",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:276"
+    },
+    {
+     "name": null,
+     "nid": "0x9fb6228e",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sys_ppu_thread_exit",
+     "nid": "0xaff080a4",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:512"
+    },
+    {
+     "name": "sys_lwmutex_destroy",
+     "nid": "0xc3476d0c",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:613"
+    },
+    {
+     "name": "_sys_strncpy",
+     "nid": "0xd3039d4d",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:333"
+    },
+    {
+     "name": "sys_lwcond_create",
+     "nid": "0xda0eb71a",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:659"
+    },
+    {
+     "name": "_sys_spu_printf_attach_group",
+     "nid": "0xdd0c1e09",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sys_prx_get_module_id_by_name",
+     "nid": "0xe0998dbf",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:1043"
+    },
+    {
+     "name": "sys_spu_image_close",
+     "nid": "0xe0da8efd",
+     "status": "mentioned",
+     "at": "runtime/spu/spu_raw.c:687"
+    },
+    {
+     "name": "sys_process_get_paramsfo",
+     "nid": "0xe75c40f2",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:1149"
+    },
+    {
+     "name": "sys_spu_image_import",
+     "nid": "0xebe5f72f",
+     "status": "mentioned",
+     "at": "runtime/syscalls/lv2_register.c:33"
+    },
+    {
+     "name": "sys_lwcond_signal",
+     "nid": "0xef87a695",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:696"
+    },
+    {
+     "name": "_sys_vprintf",
+     "nid": "0xfa7f693d",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "_sys_memcmp",
+     "nid": "0xfb5db080",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:393"
+    },
+    {
+     "name": "_sys_strncmp",
+     "nid": "0x04e83d2c",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:372"
+    },
+    {
+     "name": "_sys_strcat",
+     "nid": "0x052d29a6",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:341"
+    },
+    {
+     "name": "_sys_snprintf",
+     "nid": "0x06574237",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:318"
+    },
+    {
+     "name": "sys_ppu_thread_create",
+     "nid": "0x24a1ea07",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:326"
+    },
+    {
+     "name": "_sys_memmove",
+     "nid": "0x27427742",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "_sys_strlen",
+     "nid": "0x2d36462b",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:326"
+    },
+    {
+     "name": "sys_ppu_thread_get_id",
+     "nid": "0x350d454e",
+     "status": "defined",
+     "at": "runtime/ppu/ppu_sysprx.cpp:374"
+    },
+    {
+     "name": "sys_ppu_thread_register_atexit",
+     "nid": "0x3dd4a957",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "_sys_strcmp",
+     "nid": "0x459b4393",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:349"
+    },
+    {
+     "name": "_sys_memset",
+     "nid": "0x68b9b011",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:379"
+    },
+    {
+     "name": "_sys_memcpy",
+     "nid": "0x6bf66ea7",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:386"
+    },
+    {
+     "name": "_sys_strchr",
+     "nid": "0x7498887b",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sys_time_get_system_time",
+     "nid": "0x8461e528",
+     "status": "defined",
+     "at": "runtime/ppu/ppu_sysprx.cpp:65"
+    },
+    {
+     "name": "_sys_strcpy",
+     "nid": "0x99c88692",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:358"
+    },
+    {
+     "name": "_sys_printf",
+     "nid": "0x9f04f7af",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:276"
+    },
+    {
+     "name": "sys_ppu_thread_unregister_atexit",
+     "nid": "0xac6fc404",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "sys_ppu_thread_exit",
+     "nid": "0xaff080a4",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:512"
+    },
+    {
+     "name": "_sys_strncpy",
+     "nid": "0xd3039d4d",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:333"
+    },
+    {
+     "name": "_sys_memcmp",
+     "nid": "0xfb5db080",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:393"
+    },
+    {
+     "name": "_sys_strncmp",
+     "nid": "0x04e83d2c",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:372"
+    },
+    {
+     "name": "sys_lwmutex_lock",
+     "nid": "0x1573dc3f",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:523"
+    },
+    {
+     "name": "sys_lwmutex_unlock",
+     "nid": "0x1bc200f4",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:592"
+    },
+    {
+     "name": "sys_ppu_thread_create",
+     "nid": "0x24a1ea07",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:326"
+    },
+    {
+     "name": "_sys_strlen",
+     "nid": "0x2d36462b",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:326"
+    },
+    {
+     "name": "sys_lwmutex_create",
+     "nid": "0x2f85c0ef",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:496"
+    },
+    {
+     "name": "sys_ppu_thread_get_id",
+     "nid": "0x350d454e",
+     "status": "defined",
+     "at": "runtime/ppu/ppu_sysprx.cpp:374"
+    },
+    {
+     "name": "_sys_strcmp",
+     "nid": "0x459b4393",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:349"
+    },
+    {
+     "name": "_sys_memset",
+     "nid": "0x68b9b011",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:379"
+    },
+    {
+     "name": "_sys_memcpy",
+     "nid": "0x6bf66ea7",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:386"
+    },
+    {
+     "name": "_sys_strcpy",
+     "nid": "0x99c88692",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:358"
+    },
+    {
+     "name": "sys_ppu_thread_exit",
+     "nid": "0xaff080a4",
+     "status": "defined",
+     "at": "runtime/syscalls/sys_ppu_thread.c:512"
+    },
+    {
+     "name": "_sys_malloc",
+     "nid": "0xbdb18f83",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:982"
+    },
+    {
+     "name": "sys_lwmutex_destroy",
+     "nid": "0xc3476d0c",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:613"
+    },
+    {
+     "name": "_sys_free",
+     "nid": "0xf7f7fb20",
+     "status": "defined",
+     "at": "libs/system/sysPrxForUser.c:992"
+    }
+   ]
+  },
+  "cellLibprof": {
+   "imported": 2,
+   "defined": 0,
+   "mentioned": 0,
+   "absent": 2,
+   "absent_names": [
+    "cellUserTraceRegister",
+    "cellUserTraceUnregister"
+   ],
+   "functions": [
+    {
+     "name": "cellUserTraceRegister",
+     "nid": "0x05893e7c",
+     "status": "absent",
+     "at": null
+    },
+    {
+     "name": "cellUserTraceUnregister",
+     "nid": "0x6d045c2e",
+     "status": "absent",
+     "at": null
+    }
+   ]
+  }
+ },
+ "syscalls_seen": 77,
+ "syscalls": {
+  "defined": 51,
+  "mentioned": 11,
+  "absent": 15
+ },
+ "syscall_rows": [
+  {
+   "name": "sys_mutex_unlock",
+   "calls": 20784373,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_mutex.c:309"
+  },
+  {
+   "name": "sys_mutex_lock",
+   "calls": 20719870,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_mutex.c:180"
+  },
+  {
+   "name": "sys_ppu_thread_yield",
+   "calls": 6942438,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_ppu_thread.c:689"
+  },
+  {
+   "name": "sys_timer_usleep",
+   "calls": 6777872,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_timer.c:111"
+  },
+  {
+   "name": "sys_semaphore_post",
+   "calls": 6692835,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_semaphore.c:501"
+  },
+  {
+   "name": "sys_semaphore_wait",
+   "calls": 1856652,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_semaphore.c:329"
+  },
+  {
+   "name": "sys_event_queue_receive",
+   "calls": 1315237,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_event.c:289"
+  },
+  {
+   "name": "sys_time_get_timebase_frequency",
+   "calls": 337334,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_timer.c:362"
+  },
+  {
+   "name": "sys_cond_signal",
+   "calls": 266024,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_cond.c:222"
+  },
+  {
+   "name": "sys_mutex_create",
+   "calls": 195210,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_mutex.c:72"
+  },
+  {
+   "name": "sys_cond_create",
+   "calls": 194678,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_cond.c:55"
+  },
+  {
+   "name": "sys_event_queue_tryreceive",
+   "calls": 194454,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_event.c:610"
+  },
+  {
+   "name": "sys_mutex_destroy",
+   "calls": 194243,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_mutex.c:147"
+  },
+  {
+   "name": "sys_cond_destroy",
+   "calls": 194157,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_cond.c:105"
+  },
+  {
+   "name": "sys_ppu_thread_set_priority",
+   "calls": 113817,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_ppu_thread.c:1147"
+  },
+  {
+   "name": "sys_net_bnet_poll",
+   "calls": 113716,
+   "status": "defined",
+   "at": "libs/network/sysNet.c:861"
+  },
+  {
+   "name": "sys_cond_wait",
+   "calls": 103692,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_cond.c:121"
+  },
+  {
+   "name": "sys_rsx_attribute",
+   "calls": 95618,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_mutex_trylock",
+   "calls": 64603,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_mutex.c:248"
+  },
+  {
+   "name": "sys_net_bnet_accept",
+   "calls": 56856,
+   "status": "defined",
+   "at": "libs/network/sysNet.c:446"
+  },
+  {
+   "name": "sys_rsx_context_attribute",
+   "calls": 47898,
+   "status": "mentioned",
+   "at": "libs/video/sys_rsx.c:204"
+  },
+  {
+   "name": "sys_spu_thread_write_spu_mb",
+   "calls": 40171,
+   "status": "mentioned",
+   "at": "runtime/syscalls/lv2_register.c:316"
+  },
+  {
+   "name": "sys_ppu_thread_get_priority",
+   "calls": 37938,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_ppu_thread.c:1096"
+  },
+  {
+   "name": "sys_event_queue_drain",
+   "calls": 8906,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_event.c:662"
+  },
+  {
+   "name": "sys_fs_read",
+   "calls": 8771,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:452"
+  },
+  {
+   "name": "sys_semaphore_create",
+   "calls": 2015,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_semaphore.c:216"
+  },
+  {
+   "name": "sys_fs_lseek",
+   "calls": 1959,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:589"
+  },
+  {
+   "name": "sys_semaphore_destroy",
+   "calls": 1620,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_semaphore.c:292"
+  },
+  {
+   "name": "sys_fs_fcntl",
+   "calls": 258,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_fs_readdir",
+   "calls": 185,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:793"
+  },
+  {
+   "name": "sys_fs_open",
+   "calls": 163,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:274"
+  },
+  {
+   "name": "sys_fs_stat",
+   "calls": 95,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:674"
+  },
+  {
+   "name": "sys_fs_close",
+   "calls": 81,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:560"
+  },
+  {
+   "name": "_sys_lwmutex_create",
+   "calls": 68,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_memory_get_user_memory_size",
+   "calls": 52,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_memory.c:162"
+  },
+  {
+   "name": "sys_mmapper_allocate_shared_memory",
+   "calls": 41,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_memory.c:363"
+  },
+  {
+   "name": "sys_mmapper_map_shared_memory",
+   "calls": 41,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_memory.c:467"
+  },
+  {
+   "name": "sys_fs_opendir",
+   "calls": 34,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:741"
+  },
+  {
+   "name": "sys_fs_closedir",
+   "calls": 32,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:857"
+  },
+  {
+   "name": "_sys_ppu_thread_create",
+   "calls": 30,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_ppu_thread_start",
+   "calls": 30,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "_sys_prx_start_module",
+   "calls": 28,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_memory_allocate",
+   "calls": 24,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_memory.c:61"
+  },
+  {
+   "name": "_sys_lwmutex_destroy",
+   "calls": 16,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_mmapper_free_shared_memory",
+   "calls": 15,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_mmapper_unmap_shared_memory",
+   "calls": 15,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "_sys_prx_load_module",
+   "calls": 14,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_spu_thread_connect_event",
+   "calls": 12,
+   "status": "mentioned",
+   "at": "runtime/syscalls/lv2_register.c:325"
+  },
+  {
+   "name": "_sys_ppu_thread_exit",
+   "calls": 11,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_spu_thread_group_create",
+   "calls": 6,
+   "status": "mentioned",
+   "at": "runtime/syscalls/lv2_register.c:494"
+  },
+  {
+   "name": "sys_spu_thread_initialize",
+   "calls": 6,
+   "status": "mentioned",
+   "at": "runtime/syscalls/sys_event.c:13"
+  },
+  {
+   "name": "sys_spu_thread_group_start",
+   "calls": 6,
+   "status": "mentioned",
+   "at": "runtime/syscalls/lv2_register.c:931"
+  },
+  {
+   "name": "sys_ppu_thread_join",
+   "calls": 4,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_ppu_thread.c:556"
+  },
+  {
+   "name": "sys_time_get_current_time",
+   "calls": 4,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_timer.c:324"
+  },
+  {
+   "name": "sys_fs_write",
+   "calls": 4,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:522"
+  },
+  {
+   "name": "sys_memory_container_create",
+   "calls": 3,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_memory.c:226"
+  },
+  {
+   "name": "sys_memory_container_destroy",
+   "calls": 3,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_memory.c:256"
+  },
+  {
+   "name": "sys_rsx_context_iomap",
+   "calls": 3,
+   "status": "mentioned",
+   "at": "libs/video/sys_rsx.c:313"
+  },
+  {
+   "name": "sys_event_queue_create",
+   "calls": 2,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_event.c:140"
+  },
+  {
+   "name": "sys_mmapper_allocate_address",
+   "calls": 2,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_memory.c:305"
+  },
+  {
+   "name": "_sys_prx_register_module",
+   "calls": 2,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_net_infoctl",
+   "calls": 2,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_process_getpid",
+   "calls": 1,
+   "status": "defined",
+   "at": "libs/system/sysPrxForUser.c:200"
+  },
+  {
+   "name": "sys_process_get_sdk_version",
+   "calls": 1,
+   "status": "mentioned",
+   "at": "runtime/syscalls/lv2_register.c:2221"
+  },
+  {
+   "name": "_sys_process_get_paramsfo",
+   "calls": 1,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_event_port_create",
+   "calls": 1,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_event.c:763"
+  },
+  {
+   "name": "sys_event_port_connect_local",
+   "calls": 1,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_event.c:818"
+  },
+  {
+   "name": "sys_time_get_timezone",
+   "calls": 1,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_timer.c:290"
+  },
+  {
+   "name": "syscall_462",
+   "calls": 1,
+   "status": "absent",
+   "at": null
+  },
+  {
+   "name": "sys_rsx_memory_allocate",
+   "calls": 1,
+   "status": "mentioned",
+   "at": "libs/video/sys_rsx.c:248"
+  },
+  {
+   "name": "sys_rsx_context_allocate",
+   "calls": 1,
+   "status": "mentioned",
+   "at": "libs/video/sys_rsx.c:274"
+  },
+  {
+   "name": "sys_rsx_device_map",
+   "calls": 1,
+   "status": "mentioned",
+   "at": "libs/video/sys_rsx.c:380"
+  },
+  {
+   "name": "sys_net_bnet_bind",
+   "calls": 1,
+   "status": "defined",
+   "at": "libs/network/sysNet.c:386"
+  },
+  {
+   "name": "sys_net_bnet_listen",
+   "calls": 1,
+   "status": "defined",
+   "at": "libs/network/sysNet.c:436"
+  },
+  {
+   "name": "sys_net_bnet_setsockopt",
+   "calls": 1,
+   "status": "defined",
+   "at": "libs/network/sysNet.c:692"
+  },
+  {
+   "name": "sys_net_bnet_socket",
+   "calls": 1,
+   "status": "defined",
+   "at": "libs/network/sysNet.c:282"
+  },
+  {
+   "name": "sys_fs_unlink",
+   "calls": 1,
+   "status": "defined",
+   "at": "runtime/syscalls/sys_fs.c:950"
+  }
+ ]
+}

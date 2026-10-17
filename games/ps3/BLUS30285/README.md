@@ -17,6 +17,61 @@ A ISO é legível como ISO 9660 em claro (o PARAM.SFO e o EBOOT foram lidos dire
 o SELF assinado do disco: a análise estática precisa do ELF que o usuário extrair dele.
 Sem atualização instalada: o port é para a versão 01.00.
 
+## Análise do log do Armadasx3 (2026-10-17)
+
+Fonte: pacote de diagnóstico do usuário `armadasx3-diagnostico-20261017-125326-BLUS30285.zip`
+(ARMSX3 `v0.0.43-21645-44cf6141`), três boots deste jogo em `ARMSX3.log` e `ARMSX3.old.log`.
+Extraído com `tools/ps3/parse_rpcs3_log.py` → `analysis/armadasx3-log-20261017.json`.
+Cruzado com o ps3recomp `39a36296` por `tools/ps3/hle_coverage.py` →
+`analysis/hle-coverage-ps3recomp-39a36296.json`.
+
+### Fatos (impressos pelo emulador)
+
+| Fato | Evidência |
+|---|---|
+| Hash PPU `PPU-9cd5730cfe6d47774b8e4a45dae1fb32c2cb46fb`, igual nos 3 boots | `ARMSX3.log:534` |
+| SDK `0x250001`, SELF authid `0x1010000001000003`; código em `0x10000` (17,7 MB), dados em `0x10f0000` | `ARMSX3.log:491-503, 1412` |
+| ISO sem criptografia ("enc type: NONE") | `ARMSX3.log`, "ISO: init" |
+| **408 funções importadas em 26 módulos**; 14 NIDs sem nome no RPCS3 (todos em `libad_core`/`libad_async`) | `ARMSX3.log:1418+` |
+| Única biblioteca de firmware carregada em LLE: `liblv2.sprx` | `ARMSX3.log:2197` |
+| **15 imagens SPU** embutidas no executável | linhas `SPU executable hash` |
+| Threads PPU: `main_thread`, `LoopSimulation`, `LoopRender`, `MoviePlayer2 Decode Thread`, `FileCopier::Thread` (instalação no HDD), threads de save | prefixos de thread do log |
+| Threads SPU: grupo de 6 "Job Manager - Job Thread", criado por `sys_spu_thread_group_create`/`sys_spu_thread_initialize` (6 de cada) | estatísticas de syscalls |
+| Em ~37 min: `sys_ppu_thread_yield` 811 milhões, `sys_mutex_lock/unlock` ~24 milhões cada, `sys_semaphore_create/destroy` ~4 milhões cada | último bloco "PPU Syscall Usage Stats" de `ARMSX3.old.log` |
+| Chamadas ainda TODO no emulador: `_sys_prx_register_module`, `sys_net_infoctl`, `cellNetCtlAddHandler`, `cellAudioOutGetDeviceInfo` | linhas "TODO:" |
+| Arquivos ausentes tratados pelo jogo (CELL_ENOENT): dados opcionais em `/dev_hdd0/game/BLUS30285/…` e índices `indexedassets.txt` | erros de `sys_fs` |
+
+### Cobertura no ps3recomp (critério: nome no código-fonte, não correção)
+
+| | Definido | Só mencionado | Ausente |
+|---|---|---|---|
+| 408 imports | 296 | 34 | 78 |
+| 77 syscalls vistas | 51 | 11 | 15 |
+
+Os ausentes se concentram em:
+- **Rede e PSN:** `sceNp` (12), `sceNpCommerce2` (11), `sys_net` (3) e `cellHttp` (2).
+- **`libad_core`/`libad_async` (21):** são as funções `sceAd*`.
+- **`cellCelpEnc` (8):** codificação de voz.
+- **`sysPrxForUser` (11):** entre elas `sys_raw_spu_load` e `sys_prx_register_library`.
+- **Funções isoladas:** `cellSaveDataListAutoSave`, `cellSaveDataFixedDelete`, `cellGameDataExitBroken`, `cellKbRead`, `cellGcmGetLastSecondVTime` e `cellSpursGetSpuThreadId`.
+
+### Inferências (a confirmar na análise estática)
+
+- `sceAd*` parece ser a biblioteca de publicidade in-game da PSN. Junto com PSN, comércio,
+  rede, voz e câmera, pode responder "sem rede / sem dispositivo" num port offline. São stubs
+  **declarados**, não silenciosos. Confiança: média, pelos nomes.
+- As syscalls ausentes `_sys_ppu_thread_create`, `_sys_lwmutex_*` e `_sys_prx_*` provavelmente
+  vêm do `liblv2.sprx` em LLE dentro do emulador. No ps3recomp, o `sysPrxForUser` em HLE ocupa
+  esse lugar. Só a busca por instruções `sc` no ELF mostra quais syscalls o jogo faz direto.
+  Confiança: média.
+- O "Job Manager" é um grupo de 6 threads SPU próprio (syscalls `sys_spu_thread_*`), não um
+  workload do SPURS. O jogo também importa `cellSpurs`, provavelmente para outra coisa (áudio?).
+  Para o port, os programas do Job Manager e o laço quente (LS `0x3fd00`) são o primeiro alvo
+  de lift de SPU. Confiança: média.
+- O `sys_ppu_thread_yield` em massa (~365 mil/s) é espera ocupada. Num port nativo vira
+  `sched_yield`/espera real, e é aí que pode haver ganho sobre o emulador. Confiança: baixa,
+  até medir.
+
 ## O que já se sabe (com fonte)
 
 Nenhum dos fatos abaixo vem dos arquivos do jogo. São medições do mesmo jogo rodando **emulado**
@@ -51,9 +106,7 @@ Android.
 ## Próximos passos (precisam do usuário)
 
 1. ~~Inventário do dump~~ — feito (`inventory/disc-01.00.json`).
-2. Mandar um pacote de diagnóstico do Armadasx3 de uma sessão desse jogo (por exemplo o 101112).
-   O log traz o hash PPU, os módulos PRX carregados, as funções HLE chamadas e as threads SPU.
-   É a primeira lista de imports e subsistemas, sem tocar no binário.
+2. ~~Pacote de diagnóstico do Armadasx3~~: feito (seção acima).
 3. Para a análise estática (M2 deste jogo), o executável em claro (ELF) da sua cópia. O projeto
    não descriptografa nada.
 

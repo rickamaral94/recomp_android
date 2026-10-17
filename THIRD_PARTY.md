@@ -2,7 +2,9 @@
 
 ## Código incluído neste repositório
 
-Nenhum. O M0 é código original.
+| Componente | Commit | Licença | Uso |
+|---|---|---|---|
+| sp00nznet/ps3recomp (submódulo `third_party/ps3recomp`) | `39a36296511c445707adabcd312f0b740cfbd694` | MIT | `tools/ppu_lifter.py` e os cabeçalhos de `runtime/ppu` no teste diferencial (M1-PS3); nada dele vai no APK ainda |
 
 ## Dependências de build (baixadas, não versionadas aqui)
 
@@ -22,7 +24,6 @@ for, o commit fixado e a licença entram nesta tabela.
 | Projeto | Commit auditado | Licença | Uso previsto |
 |---|---|---|---|
 | ran-j/PS2Recomp | `eb8688b2fd191129f103a39543002c005b33409c` | GPL-3.0 | pipeline PS2 (M1-PS2) |
-| sp00nznet/ps3recomp | `39a36296511c445707adabcd312f0b740cfbd694` | MIT | pipeline PS3 (M1-PS3) |
 | andrebrumdev/gow2-recomp | `a787912c7b2e2f61bb387c9c22722a93e6c5ee3c` | MIT | referência de port por jogo e de Android/Vulkan |
 | morluto/rea | `3fa972af7c7cb6cf014ffc426bdf7130dc6f2fd2` (v6.5.0) | MIT | análise assistida (ferramenta externa, não é ligada ao app) |
 

@@ -64,6 +64,14 @@ class Gen:
 
     def case(self, name, body, r4=0, r5=0, r6=0, cr=0, xer=0, r8=SENT8,
              mask7=M64, mask8=M64, cr_mask=0xFFFFFFFF, group=None):
+        # A record form (Rc=1) copies XER[SO] into CR0: run every such case with SO set too,
+        # or a lift that drops that copy goes unnoticed.
+        mnemonic = name.split()[0]
+        if mnemonic.endswith(".") and not xer & XER_SO:
+            self._case(name + " [SO]", body, r4, r5, r6, cr, xer | XER_SO, r8, mask7, mask8, cr_mask, group)
+        self._case(name, body, r4, r5, r6, cr, xer, r8, mask7, mask8, cr_mask, group)
+
+    def _case(self, name, body, r4, r5, r6, cr, xer, r8, mask7, mask8, cr_mask, group):
         idx = len(self.cases)
         self.lines.append(f"# case {idx}: {name}")
         for reg, v in (("4", r4), ("5", r5), ("6", r6), ("7", SENT7), ("8", r8)):
@@ -305,7 +313,8 @@ def emit(g, out_dir):
     head += ["    mtlr 28", "    blr"]
     body = []
     for i, ch in enumerate(chunks):
-        body += ["    .p2align 4", f"    .globl ppu_diff_chunk_{i}", f"ppu_diff_chunk_{i}:"]
+        # Local symbols: a global one would leave every `bl` as an unresolved relocation.
+        body += ["    .p2align 4", f"ppu_diff_chunk_{i}:"]
         body += ["    " + l if not l.endswith(":") and not l.startswith("#") else l for l in ch]
         body += ["    blr"]
     with open(os.path.join(out_dir, "kernel.S"), "w") as f:

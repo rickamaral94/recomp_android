@@ -142,6 +142,10 @@ def main():
 
     ppc = ["--target=powerpc64-unknown-linux-gnu", "-c"]
     timings["assemble"] = run([clang, *ppc, os.path.join(b, "kernel.S"), "-o", os.path.join(b, "kernel.o")])
+    relocs = subprocess.run([tool("llvm-readelf"), "-r", os.path.join(b, "kernel.o")],
+                            capture_output=True, text=True, check=True).stdout
+    if "Relocation section" in relocs:
+        raise SystemExit("kernel.o has relocations: its raw .text bytes would not match the oracle's")
     run([objcopy, "-O", "binary", "--only-section=.text", os.path.join(b, "kernel.o"), os.path.join(b, "kernel.bin")])
     size = os.path.getsize(os.path.join(b, "kernel.bin"))
 

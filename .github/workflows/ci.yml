@@ -41,6 +41,30 @@ jobs:
           RECOMP_EXPECT_VULKAN: '1'
         run: ctest --test-dir build --output-on-failure
 
+  ppu-diff:
+    name: PS3 PPU differential (qemu-ppc64 vs lifted, host + arm64)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Dependencies (clang/lld for PPC64, qemu-user)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld llvm qemu-user
+      - name: NDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK_VERSION"
+      - name: Differential test
+        run: python3 -I tests/ps3/ppu_diff/run_diff.py --build build-ppu-diff --ndk "$ANDROID_HOME/ndk/$NDK_VERSION"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ppu-diff-report-${{ github.sha }}
+          path: build-ppu-diff/report.json
+          if-no-files-found: warn
+
   android:
     name: Android arm64-v8a APK
     runs-on: ubuntu-24.04
